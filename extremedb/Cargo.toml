@@ -1,0 +1,19 @@
+# Cargo.toml
+#
+# This file is a part of the eXtremeDB source code
+# Copyright (c) 2020 McObject LLC
+# All Rights Reserved
+
+[package]
+name = "extremedb"
+version = "0.1.0"
+authors = ["McObject LLC <info@mcobject.com>"]
+edition = "2018"
+
+[dependencies]
+extremedb_sys = { path = "../extremedb_sys" }
+
+[features]
+sequences = ["extremedb_sys/sequences"]
+sql = ["extremedb_sys/sql"]
+rsql = ["sql"]

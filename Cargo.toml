@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "extremedb_sys",
+    "extremedb"
+]
