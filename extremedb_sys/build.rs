@@ -111,7 +111,28 @@ fn mco_libraries_subdir(cfg: &BuildConfig) -> String {
 }
 
 fn mco_libraries(cfg: &BuildConfig) -> Vec<String> {
-    let mut ret = vec![
+    let mut ret = vec![];
+
+    if cfg.sql {
+        ret.push("mcosql");
+        ret.push("mcorsql");
+    }
+
+    if cfg.sequences {
+        ret.push("mcoseq");
+        ret.push("mcoseqmath");
+    }
+
+    let tmgr_lib = match cfg.trans_mgr {
+        TransactionManager::Exclusive => "mcotexcl",
+        TransactionManager::MURSIW => "mcotmursiw",
+        TransactionManager::MVCC => "mcotmvcc",
+    };
+
+    ret.push(tmgr_lib);
+
+    ret.extend(vec![
+        "mcoseri",
         "mcolib",
         "mcocryptstub",
         "mcotrace",
@@ -123,9 +144,8 @@ fn mco_libraries(cfg: &BuildConfig) -> Vec<String> {
         "mcosaldload",
         "mconet",
         "mcobackup",
-        "mcoseri",
         "mcouwrt",
-    ];
+    ]);
 
     let disk_lib = if cfg!(target_os = "macos") || cfg!(target_os = "linux") {
         "mcofu98zip"
@@ -167,24 +187,6 @@ fn mco_libraries(cfg: &BuildConfig) -> Vec<String> {
     };
 
     ret.push(sync_lib);
-
-    let tmgr_lib = match cfg.trans_mgr {
-        TransactionManager::Exclusive => "mcotexcl",
-        TransactionManager::MURSIW => "mcotmursiw",
-        TransactionManager::MVCC => "mcotmvcc",
-    };
-
-    ret.push(tmgr_lib);
-
-    if cfg.sql {
-        ret.push("mcosql");
-        ret.push("mcorsql");
-    }
-
-    if cfg.sequences {
-        ret.push("mcoseq");
-        ret.push("mcoseqmath");
-    }
 
     let suffix = String::from(if cfg.debug { "_debug" } else { "" });
 
@@ -265,9 +267,6 @@ fn generate_bindings(build_cfg: &BuildConfig, out_dir: &Path, mco_inc_dir: &Path
     let builder = bindgen::Builder::default()
         .clang_arg(String::from("-I") + mco_inc_dir.to_str().unwrap())
         .header_contents("bindgen.h", &bindings_header)
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        //.parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .default_enum_style(EnumVariation::ModuleConsts)
         .generate_comments(false)
         .whitelist_function("mco_.*")
