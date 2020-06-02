@@ -32,7 +32,9 @@
 //!
 //! ```
 //! # use extremedb::database;
+//! # use extremedb::runtime::Runtime;
 //! # fn main() {
+//! #    let runtime = Runtime::start(vec![]);
 //!     let mut db_params = database::Params::new();
 //!     db_params
 //!         .ddl_dict_size(32768)

@@ -647,6 +647,8 @@ impl ModeMask {
 ///
 /// ```
 /// # use extremedb::database::{Params, LogType};
+/// # use extremedb::runtime::Runtime;
+/// # let runtime = Runtime::start(vec![]);
 /// let mut params = Params::new();
 /// params.db_log_type(LogType::Redo);
 /// ```
