@@ -97,7 +97,7 @@ impl BuildConfig {
     }
 
     fn get_env(name: &str) -> String {
-        env::var(name).expect(&format!("environment variable not set: {}", name))
+        env::var(name).unwrap_or_else(|_| panic!("environment variable not set: {}", name))
     }
 }
 
@@ -336,8 +336,8 @@ fn output_libraries(build_cfg: &BuildConfig, mco_lib_dir: &Path) {
 }
 
 fn config_cargo_rerun() {
-    println!("cargo:rerun-if-changed={}", "src/cpp/rssql.cpp");
-    println!("cargo:rerun-if-changed={}", "src/cpp/rssql.h");
+    println!("cargo:rerun-if-changed=src/cpp/rssql.cpp");
+    println!("cargo:rerun-if-changed=src/cpp/rssql.h");
 
     println!("cargo:rerun-if-env-changed={}", ENV_MCO_ROOT);
     println!("cargo:rerun-if-env-changed={}", ENV_CFG_DYLIB);
