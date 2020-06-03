@@ -51,6 +51,13 @@
 //!     // eXtremeDB runtime must be started before any operations can be performed.
 //!     let runtime = Runtime::start(vec![]);
 //!
+//! #     if runtime.info().multiprocess_access_supported() {
+//! #         return Ok(());
+//! #     }
+//!     // This example creates a conventional memory device, and will not work with the
+//!     // shared memory runtime.
+//!     assert!(!runtime.info().multiprocess_access_supported());
+//!
 //!     // Initialize database parameters. SQL databases require these three
 //!     // parameters to be explicitly set.
 //!     let mut db_params = Params::new();

@@ -30,7 +30,7 @@
 //! # use extremedb::runtime::Runtime;
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::Result;
-//! #
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -38,8 +38,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(i integer, s string);", &[])?;
@@ -65,6 +65,7 @@
 //! # use extremedb::runtime::Runtime;
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -72,8 +73,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement(
@@ -100,6 +101,7 @@
 //! # use extremedb::runtime::Runtime;
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # use std::time::{self, SystemTime};
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
@@ -108,8 +110,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(ts timestamp);", &[])?;
@@ -136,6 +138,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value::Numeric;
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -143,8 +146,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(n numeric(5, 3));", &[])?;
@@ -168,6 +171,7 @@
 //! # use extremedb::runtime::Runtime;
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -175,8 +179,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(i int);", &[])?;
@@ -203,6 +207,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value::Binary;
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -210,8 +215,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(s string, b varbinary);", &[])?;
@@ -236,6 +241,7 @@
 //! # use extremedb::runtime::Runtime;
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::Result;
+//! # use extremedb::device::util;
 //! # fn main() -> Result<()> {
 //! #     let runtime = Runtime::start(vec![]);
 //! #     let mut db_params = Params::new();
@@ -243,8 +249,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //!     engine.execute_statement("CREATE TABLE TestTable(a array(int), b blob);", &[])?;
@@ -297,7 +303,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value;
 //! # use extremedb::Result;
-//! #
+//! # use extremedb::device::util;
 //! # fn use_value(val: value::Ref) -> Result<()> {
 //! #    assert_eq!(val.value_type()?, value::Type::Int8);
 //!     if val.value_type()? == value::Type::Int8 {
@@ -315,8 +321,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //! #     engine.execute_statement("CREATE TABLE TestTable(i int);", &[])?;
@@ -352,7 +358,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value;
 //! # use extremedb::Result;
-//! #
+//! # use extremedb::device::util;
 //! # fn use_value(val: value::Ref) -> Result<()> {
 //! #    assert_eq!(val.value_type()?, value::Type::Int8);
 //!     if val.value_type()? == value::Type::Int8 {
@@ -374,8 +380,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //! #     engine.execute_statement("CREATE TABLE TestTable(i int);", &[])?;
@@ -412,7 +418,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value;
 //! # use extremedb::Result;
-//! #
+//! # use extremedb::device::util;
 //! # fn use_value(val: value::Ref) -> Result<()> {
 //! #     assert_eq!(val.value_type()?, value::Type::String);
 //!     if val.value_type()? == value::Type::String {
@@ -430,8 +436,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //! #     engine.execute_statement("CREATE TABLE TestTable(s string);", &[])?;
@@ -468,7 +474,7 @@
 //! # use extremedb::sql::engine::{Engine, LocalEngine};
 //! # use extremedb::sql::value;
 //! # use extremedb::Result;
-//! #
+//! # use extremedb::device::util;
 //! # fn use_value(val: value::Ref) -> Result<()> {
 //! #     assert_eq!(val.value_type()?, value::Type::Array);
 //!     if val.value_type()? == value::Type::Array {
@@ -492,8 +498,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![Device::new_mem_conv(Assignment::Database, 1024 * 1024)?];
-//! #     let db = Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = Connection::new(&db)?;
 //! #     let engine = LocalEngine::new(&conn)?;
 //! #     engine.execute_statement("CREATE TABLE TestTable(a array(int));", &[])?;

@@ -58,12 +58,15 @@
 //! ```
 
 use std::alloc::{self, Layout};
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 use std::mem;
 use std::ptr;
 
 use crate::runtime;
 use crate::{exdb_sys, mco_ret, Error, Result};
+
+#[doc(hidden)]
+pub mod util;
 
 type McoDeviceTypeUnion = exdb_sys::mco_device_t___bindgen_ty_1;
 type McoDeviceTypeConv = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_1;
@@ -88,6 +91,7 @@ mod mco_dev_type {
 ///
 /// The applications use this enumeration to describe the intended purpose
 /// of the device.
+#[derive(Copy, Clone, Debug)]
 pub enum Assignment {
     /// Metadata and database objects, indexes, and other database structures.
     Database,
@@ -416,6 +420,16 @@ impl Device {
             size: 0,
             dev: McoDeviceTypeUnion { raid },
         }))
+    }
+
+    fn file_name(&self) -> Option<&str> {
+        match self.0.type_ {
+            mco_dev_type::MCO_MEMORY_FILE => {
+                let cname = unsafe { CStr::from_ptr(self.0.dev.file.name.as_ptr()) };
+                cname.to_str().ok()
+            }
+            _ => None,
+        }
     }
 }
 

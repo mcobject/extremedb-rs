@@ -18,7 +18,7 @@
 //! # use extremedb::sql::engine::{LocalEngine, LocalEngineRef};
 //! # use extremedb::sql::rsql::server::{self, Server};
 //! # use extremedb::{connection, database, device, runtime, sql};
-//! #
+//! # use extremedb::device::util;
 //! # fn try_create_server(engine: &LocalEngine, port: u16) -> extremedb::Result<()> {
 //!     let eref = LocalEngineRef::new(&engine);
 //!
@@ -40,11 +40,8 @@
 //! #         .ddl_dict_size(32768)
 //! #         .max_classes(100)
 //! #         .max_indexes(1000);
-//! #     let mut devs = vec![device::Device::new_mem_conv(
-//! #         device::Assignment::Database,
-//! #         1024 * 1024,
-//! #     )?];
-//! #     let db = database::Database::open(&runtime, "test_db", None, &mut devs, db_params)?;
+//! #     let mut devs = util::DeviceContainer::new();
+//! #     let db = database::Database::open(&runtime, "test_db", None, devs.devices(), db_params)?;
 //! #     let conn = connection::Connection::new(&db)?;
 //! #     let engine = sql::engine::LocalEngine::new(&conn)?;
 //! #

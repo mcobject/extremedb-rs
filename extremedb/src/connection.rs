@@ -15,20 +15,18 @@
 //!
 //! ```
 //! # use extremedb::{connection, database, device, runtime, Result};
+//! # use extremedb::device::util;
 //! #
 //! # fn main() -> Result<()> {
 //! #     let runtime = runtime::Runtime::start(vec![]);
 //! #
-//! #     let mut devs = vec![device::Device::new_mem_conv(
-//! #         device::Assignment::Database,
-//! #         1024 * 1024,
-//! #     )?];
+//! #     let mut devs = util::DeviceContainer::new();
 //! #
 //!     let db = database::Database::open(
 //! #         &runtime,
 //! #         "test_db",
 //! #         None,
-//! #         &mut devs,
+//! #         devs.devices(),
 //! #         database::Params::new(),
 //!         // ...
 //!     )?;

@@ -19,6 +19,13 @@
 //! fn main() -> Result<()> {
 //!     let runtime = runtime::Runtime::start(vec![]);
 //!
+//! #     if runtime.info().multiprocess_access_supported() {
+//! #         return Ok(());
+//! #     }
+//!     // This example creates a conventional memory device, and will not work with the
+//!     // shared memory runtime.
+//!     assert!(!runtime.info().multiprocess_access_supported());
+//!
 //!     // Default parameters.
 //!     let db_params = database::Params::new();
 //!
@@ -48,13 +55,17 @@
 //!
 //! fn main() -> Result<()> {
 //!     let runtime = runtime::Runtime::start(vec![]);
-//! #     // Do not run this example if built without disk support.
-//! #     if !runtime.info().disk_supported() {
+//! #     // Do not run this example if built without disk support, or with shared memory.
+//! #     if !runtime.info().disk_supported() || runtime.info().multiprocess_access_supported() {
 //! #         return Ok(());
 //! #     }
 //!
 //!     // Make sure that persistent database support is enabled.
 //!     assert!(runtime.info().disk_supported());
+//!
+//!     // This example creates conventional memory devices, and will not work with the
+//!     // shared memory runtime.
+//!     assert!(!runtime.info().multiprocess_access_supported());
 //!
 //!     // Default parameters.
 //!     let db_params = database::Params::new();
