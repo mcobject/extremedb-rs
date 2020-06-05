@@ -7,18 +7,12 @@
 //! `extremedb_sys` is a low-level FFI wrapper for the [McObject]'s
 //! *e*X*treme*DB database management system libraries.
 //!
-//! This crate contains a Cargo build script which does the following:
-//!
-//! - Produces Rust declarations for the *e*X*treme*DB public C API functions
-//! using Rust's [`bindgen`];
-//! - Instructs Cargo to link the *e*X*treme*DB libraries.
+//! This crate contains Rust declarations of the *e*X*treme*DB API functions and
+//! a Cargo build script which locates and links the appropriate *e*X*treme*DB
+//! libraries.
 //!
 //! The exact set of the linked *e*X*treme*DB libraries depends on the
 //! configuration. See the discussion below for details.
-//!
-//! # Prerequisites
-//!
-//! - Clang for [`bindgen`];
 //!
 //! # Configuration
 //!
@@ -79,10 +73,15 @@
 //! - **`sql`** — SQL engine (local and remote).
 //!
 //! [McObject]: https://www.mcobject.com
-//! [`bindgen`]: https://crates.io/crates/bindgen
 
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+mod core;
+pub use crate::core::*;
+
+#[cfg(feature = "sql")]
+mod sql;
+#[cfg(feature = "sql")]
+pub use sql::*;

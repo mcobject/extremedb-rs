@@ -11,10 +11,8 @@ authors = ["McObject LLC <info@mcobject.com>"]
 edition = "2018"
 
 [dependencies]
-bindgen = "0.51.1"
 
 [build-dependencies]
-bindgen = "0.51.1"
 
 [features]
 
@@ -22,3 +20,4 @@ bindgen = "0.51.1"
 # See its documentation and the Cargo.toml manifest for details.
 sequences = []
 sql = ["sequences"]
+rsql = ["sql"]

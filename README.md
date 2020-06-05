@@ -14,11 +14,11 @@ There is no need to build the crates separately.
 
 Rust applications are expected to import the `extremedb` crate only. The
 `extremedb_sys` crate is imported and built as a dependency of `extremedb`.
-It contains a Cargo build script, which generates the FFI function declarations.
+It contains Rust declarations for the *e*X*treme*DB API functions, and
+a Cargo build script which links the appropriate *e*X*treme*DB libraries.
 
 A few prerequisites are required for `extremedb_sys` to be built successfully:
 
-- Clang must be installed;
 - *e*X*treme*DB must be installed and built;
 - Certain environment variables have to be set.
 

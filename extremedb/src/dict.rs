@@ -27,8 +27,8 @@ pub type McoDictIndexField = exdb_sys::mco_dict_index_field_t;
 pub type McoDictEvent = exdb_sys::mco_dict_event_t;
 pub type McoDictCollation = exdb_sys::mco_dict_collation_t;
 pub type McoDictLayout = exdb_sys::mco_datalayout_t;
-pub type McoDictInitDataI = exdb_sys::mco_dictionary_t___bindgen_ty_1;
-pub type McoDictInitDataD = exdb_sys::mco_dictionary_t___bindgen_ty_2;
+pub type McoDictInitDataI = exdb_sys::mco_dictionary_t_init_i_data;
+pub type McoDictInitDataD = exdb_sys::mco_dictionary_t_init_d_data;
 
 pub mod mco_const {
     pub const MCO_DICT_F_LARGE_DATABASE: u32 = 0x01;

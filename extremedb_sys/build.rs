@@ -4,9 +4,7 @@
 // Copyright (c) 2020 McObject LLC
 // All Rights Reserved
 
-use bindgen::EnumVariation;
 use std::env;
-use std::io::{LineWriter, Write};
 use std::path::{Path, PathBuf};
 
 enum TransactionManager {
@@ -36,6 +34,7 @@ struct BuildConfig {
     shared_mem: bool,
     sequences: bool,
     sql: bool,
+    rsql: bool,
 }
 
 impl BuildConfig {
@@ -74,6 +73,7 @@ impl BuildConfig {
             shared_mem,
             sequences: cfg!(feature = "sequences"),
             sql: cfg!(feature = "sql"),
+            rsql: cfg!(feature = "rsql"),
         }
     }
 
@@ -114,6 +114,9 @@ fn mco_libraries(cfg: &BuildConfig) -> Vec<String> {
 
     if cfg.sql {
         ret.push("mcosql");
+    }
+
+    if cfg.rsql {
         ret.push("mcorsql");
     }
 
@@ -204,87 +207,6 @@ fn cpp_stdlib() -> Option<String> {
     }
 }
 
-fn mco_defines(cfg: &BuildConfig) -> Vec<(String, Option<String>)> {
-    let mut ret = Vec::new();
-
-    ret.push((String::from("MCO_DICT_CONST"), Some(String::from("const"))));
-
-    if cfg.x64 {
-        ret.push((String::from("MCO_PLATFORM_X64"), None));
-    }
-
-    if cfg.direct_ptr {
-        ret.push((String::from("MCO_CFG_USE_DIRECT_POINTERS"), None));
-    }
-
-    ret
-}
-
-fn generate_bindings_header(build_cfg: &BuildConfig) -> String {
-    let buf = Vec::new();
-
-    let mut writer = LineWriter::new(buf);
-
-    writer.write_all(b"#ifndef BINDGEN_H_\n").unwrap();
-
-    let defines = mco_defines(build_cfg);
-    for (def, val) in defines {
-        let s = match val {
-            Some(v) => format!("#define {} {}\n", def, v),
-            None => format!("#define {}\n", def),
-        };
-        writer.write_all(s.as_bytes()).unwrap();
-    }
-
-    writer.write_all(b"#include \"mco.h\"\n").unwrap();
-    writer.write_all(b"#include \"mcocomp.h\"\n").unwrap();
-
-    if build_cfg.sql {
-        writer.write_all(b"#include \"sql/mcoapic.h\"\n").unwrap();
-        writer.write_all(b"#include \"sql/sqlcln_c.h\"\n").unwrap();
-        writer.write_all(b"#include \"sql/sqlsrv_c.h\"\n").unwrap();
-        writer.write_all(b"#include \"sql/sqlrs.h\"\n").unwrap();
-    }
-
-    writer.write_all(b"#endif /* BINDGEN_H_ */\n").unwrap();
-
-    writer.flush().unwrap();
-
-    String::from_utf8(writer.into_inner().unwrap()).unwrap()
-}
-
-fn generate_bindings(build_cfg: &BuildConfig, out_dir: &Path, mco_inc_dir: &Path) {
-    let bindings_header = generate_bindings_header(build_cfg);
-
-    let builder = bindgen::Builder::default()
-        .clang_arg(String::from("-I") + mco_inc_dir.to_str().unwrap())
-        .header_contents("bindgen.h", &bindings_header)
-        .default_enum_style(EnumVariation::ModuleConsts)
-        .generate_comments(false)
-        .whitelist_function("mco_.*")
-        .whitelist_type("mco_.*")
-        .whitelist_type("MCO_.*");
-
-    let builder = if build_cfg.sql {
-        builder
-            .whitelist_function("mcoapi_.*")
-            .whitelist_function("mcosql_.*")
-            .whitelist_function("sqlsrv_.*")
-            .whitelist_function("sqlcln_.*")
-            .whitelist_function("mcors_.*")
-            .whitelist_type("mcors_.*")
-            .whitelist_type("MCORS_.*")
-    } else {
-        builder
-    };
-
-    let bindings = builder.generate().expect("Unable to generate bindings");
-
-    bindings
-        .write_to_file(out_dir.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
-}
-
 fn output_libraries(build_cfg: &BuildConfig, mco_lib_dir: &Path) {
     println!(
         "cargo:rustc-link-search=native={}",
@@ -317,10 +239,6 @@ fn main() {
 
     let mco_root = PathBuf::from(env::var(ENV_MCO_ROOT).unwrap());
     let mco_lib = mco_root.join(mco_libraries_subdir(&build_cfg));
-    let mco_inc = mco_root.join("include");
 
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    generate_bindings(&build_cfg, &out_dir, &mco_inc);
     output_libraries(&build_cfg, &mco_lib);
 }

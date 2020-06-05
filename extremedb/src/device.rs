@@ -68,13 +68,13 @@ use crate::{exdb_sys, mco_ret, Error, Result};
 #[doc(hidden)]
 pub mod util;
 
-type McoDeviceTypeUnion = exdb_sys::mco_device_t___bindgen_ty_1;
-type McoDeviceTypeConv = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_1;
-type McoDeviceTypeNamed = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_2;
-type McoDeviceTypeFile = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_3;
-type McoDeviceTypeMultiFile = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_4;
-type McoDeviceTypeRaid = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_5;
-// type McoDeviceTypeIDesc = exdb_sys::mco_device_t___bindgen_ty_1__bindgen_ty_6;
+type McoDeviceTypeUnion = exdb_sys::mco_device_t_dev;
+type McoDeviceTypeConv = exdb_sys::mco_device_t_dev_conv;
+type McoDeviceTypeNamed = exdb_sys::mco_device_t_dev_named;
+type McoDeviceTypeFile = exdb_sys::mco_device_t_dev_file;
+type McoDeviceTypeMultiFile = exdb_sys::mco_device_t_dev_multifile;
+type McoDeviceTypeRaid = exdb_sys::mco_device_t_dev_raid;
+// type McoDeviceTypeIDesc = exdb_sys::mco_device_t_dev_idesc;
 
 mod mco_dev_type {
     // pub const MCO_MEMORY_NULL: u32 = 0;

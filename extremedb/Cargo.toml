@@ -16,4 +16,4 @@ extremedb_sys = { path = "../extremedb_sys" }
 [features]
 sequences = ["extremedb_sys/sequences"]
 sql = ["extremedb_sys/sql"]
-rsql = ["sql"]
+rsql = ["sql", "extremedb_sys/rsql"]
