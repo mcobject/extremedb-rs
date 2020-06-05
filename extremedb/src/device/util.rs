@@ -45,10 +45,21 @@ impl DeviceContainer {
         let mut ret = DeviceContainer { devs: Vec::new() };
 
         if rt_info.disk_supported() {
+            let stem = "rstest";
+
+            // Delete any stale files.
+            remove_db_files(&stem);
+
             ret.devs.push(new_test_mem_dev(Assignment::Database));
             ret.devs.push(new_test_mem_dev(Assignment::Cache));
-            ret.devs.push(new_test_file_dev(Assignment::Persistent));
-            ret.devs.push(new_test_file_dev(Assignment::Log));
+            ret.devs.push(new_test_file_dev(
+                Assignment::Persistent,
+                Some(db_file_name(&stem)),
+            ));
+            ret.devs.push(new_test_file_dev(
+                Assignment::Log,
+                Some(log_file_name(&stem)),
+            ));
         } else {
             ret.devs.push(new_test_mem_dev(Assignment::Database));
         }
@@ -105,19 +116,15 @@ pub fn new_test_mem_dev(a: Assignment) -> Device {
 
 /// Creates a new file device which must be suitable for most doctests.
 ///
-/// The name of the file is inferred from the executable name.
+/// If `name` is `None`, the name of the file is inferred from the executable
+/// name.
 ///
 /// # Panics
 ///
 /// This function will panic if the device cannot be created, or the name of
 /// the file cannot be produced.
-pub fn new_test_file_dev(a: Assignment) -> Device {
-    let stem = db_file_name_stem();
-    let file_name = match a {
-        Assignment::Persistent => db_file_name(&stem),
-        Assignment::Log => log_file_name(&stem),
-        _ => panic!("Unexpected file device assignment"),
-    };
+pub fn new_test_file_dev(a: Assignment, name: Option<String>) -> Device {
+    let file_name = name.unwrap_or_else(|| file_name(&db_file_name_stem(), a));
 
     Device::new_file(a, FileOpenFlags::new(), &file_name)
         .expect("Failed to create the default disk device")
@@ -155,10 +162,27 @@ fn db_file_name_stem() -> String {
     stem
 }
 
+fn file_name(stem: &str, a: Assignment) -> String {
+    match a {
+        Assignment::Persistent => db_file_name(stem),
+        Assignment::Log => log_file_name(stem),
+        _ => panic!("Unexpected file device assignment"),
+    }
+}
+
 fn db_file_name(stem: &str) -> String {
     format!("{}.dbs", stem)
 }
 
 fn log_file_name(stem: &str) -> String {
     format!("{}.log", stem)
+}
+
+fn remove_db_files(stem: &str) {
+    for a in &[Assignment::Persistent, Assignment::Log] {
+        let name = file_name(stem, *a);
+        if Path::new(&name).exists() {
+            fs::remove_file(&name).expect(&format!("Failed to remove {}", name));
+        }
+    }
 }
