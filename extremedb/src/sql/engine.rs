@@ -271,7 +271,7 @@ unsafe impl Send for LocalEngineRef<'_> {}
 /// A session can be used in the same manner as the local engine.
 pub struct LocalEngineSession<'a> {
     engine: PhantomData<LocalEngineRef<'a>>,
-    h: exdb_sys::mcors_sql_session,
+    h: exdb_sys::mcosql_rs_session,
 }
 
 impl<'a> LocalEngineSession<'a> {
@@ -280,7 +280,7 @@ impl<'a> LocalEngineSession<'a> {
         let mut h = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_session_create(engine_ref.h, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_session_create(engine_ref.h, h.as_mut_ptr())
         })
         .and(Ok(LocalEngineSession {
             engine: PhantomData,
@@ -299,7 +299,7 @@ impl<'a> Engine for LocalEngineSession<'a> {
 
 impl<'a> Drop for LocalEngineSession<'a> {
     fn drop(&mut self) {
-        let rc = unsafe { exdb_sys::mcors_sql_session_destroy(self.h) };
+        let rc = unsafe { exdb_sys::mcosql_rs_session_destroy(self.h) };
         debug_assert_eq!(mcosql_error_code::SQL_OK, rc);
     }
 }

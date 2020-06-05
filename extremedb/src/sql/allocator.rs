@@ -24,7 +24,7 @@ use crate::{exdb_sys, Result};
 #[derive(Copy, Clone)]
 pub struct Ref<'a> {
     owner: PhantomData<&'a ()>,
-    pub(crate) h: exdb_sys::mcors_sql_allocator,
+    pub(crate) h: exdb_sys::mcosql_rs_allocator,
 }
 
 impl<'a> Ref<'a> {
@@ -32,7 +32,7 @@ impl<'a> Ref<'a> {
         Self::from_handle(alloc.h, alloc)
     }
 
-    pub(crate) fn from_handle<T>(h: exdb_sys::mcors_sql_allocator, _owner: &'a T) -> Self {
+    pub(crate) fn from_handle<T>(h: exdb_sys::mcosql_rs_allocator, _owner: &'a T) -> Self {
         Ref {
             owner: PhantomData,
             h,
@@ -41,14 +41,14 @@ impl<'a> Ref<'a> {
 }
 
 pub(crate) struct Owned {
-    pub(crate) h: exdb_sys::mcors_sql_allocator,
+    pub(crate) h: exdb_sys::mcosql_rs_allocator,
 }
 
 impl Owned {
     pub(crate) fn new() -> Result<Self> {
         let mut h = MaybeUninit::uninit();
 
-        result_from_code(unsafe { exdb_sys::mcors_sql_allocator_create(h.as_mut_ptr()) }).and(Ok(
+        result_from_code(unsafe { exdb_sys::mcosql_rs_allocator_create(h.as_mut_ptr()) }).and(Ok(
             Owned {
                 h: unsafe { h.assume_init() },
             },
@@ -58,7 +58,7 @@ impl Owned {
 
 impl Drop for Owned {
     fn drop(&mut self) {
-        let rc = unsafe { exdb_sys::mcors_sql_allocator_destroy(self.h) };
+        let rc = unsafe { exdb_sys::mcosql_rs_allocator_destroy(self.h) };
         debug_assert_eq!(mcosql_error_code::SQL_OK, rc);
     }
 }

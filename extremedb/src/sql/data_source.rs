@@ -272,7 +272,7 @@ impl<'a> Record<'a> {
         let mut alloc_h = MaybeUninit::uninit();
 
         new_empty_result(unsafe {
-            exdb_sys::mcors_sql_record_allocator(self.h, alloc_h.as_mut_ptr())
+            exdb_sys::mcosql_rs_record_allocator(self.h, alloc_h.as_mut_ptr())
         })
         .and(Ok(SqlAllocatorRef::from_handle(
             unsafe { alloc_h.assume_init() },
@@ -286,7 +286,7 @@ impl<'a> Record<'a> {
         let mut ret = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_record_get_column_value_ref(self.h, col, ret.as_mut_ptr())
+            exdb_sys::mcosql_rs_record_get_column_value_ref(self.h, col, ret.as_mut_ptr())
         })
         .and(Ok(Ref::from_handle(unsafe { ret.assume_init() }, self)))
     }

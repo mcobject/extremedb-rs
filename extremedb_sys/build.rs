@@ -5,7 +5,6 @@
 // All Rights Reserved
 
 use bindgen::EnumVariation;
-use cc::Build;
 use std::env;
 use std::io::{LineWriter, Write};
 use std::path::{Path, PathBuf};
@@ -195,6 +194,16 @@ fn mco_libraries(cfg: &BuildConfig) -> Vec<String> {
         .collect()
 }
 
+fn cpp_stdlib() -> Option<String> {
+    if cfg!(target_os = "linux") {
+        Some("stdc++".to_string())
+    } else if cfg!(target_os = "macos") {
+        Some("c++".to_string())
+    } else {
+        None
+    }
+}
+
 fn mco_defines(cfg: &BuildConfig) -> Vec<(String, Option<String>)> {
     let mut ret = Vec::new();
 
@@ -209,18 +218,6 @@ fn mco_defines(cfg: &BuildConfig) -> Vec<(String, Option<String>)> {
     }
 
     ret
-}
-
-fn cpp_wrapper_files(build_cfg: &BuildConfig) -> (Vec<String>, Vec<String>) {
-    let mut headers = Vec::new();
-    let mut sources = Vec::new();
-
-    if build_cfg.sql {
-        headers.push("src/cpp/rssql.h".to_string());
-        sources.push("src/cpp/rssql.cpp".to_string());
-    }
-
-    (headers, sources)
 }
 
 fn generate_bindings_header(build_cfg: &BuildConfig) -> String {
@@ -246,12 +243,7 @@ fn generate_bindings_header(build_cfg: &BuildConfig) -> String {
         writer.write_all(b"#include \"sql/mcoapic.h\"\n").unwrap();
         writer.write_all(b"#include \"sql/sqlcln_c.h\"\n").unwrap();
         writer.write_all(b"#include \"sql/sqlsrv_c.h\"\n").unwrap();
-    }
-
-    let (headers, _) = cpp_wrapper_files(build_cfg);
-    for header in headers {
-        let s = format!("#include \"{}\"\n", header);
-        writer.write_all(s.as_bytes()).unwrap();
+        writer.write_all(b"#include \"sql/sqlrs.h\"\n").unwrap();
     }
 
     writer.write_all(b"#endif /* BINDGEN_H_ */\n").unwrap();
@@ -293,36 +285,6 @@ fn generate_bindings(build_cfg: &BuildConfig, out_dir: &Path, mco_inc_dir: &Path
         .expect("Couldn't write bindings!");
 }
 
-fn build_cpp_wrapper(build_cfg: &BuildConfig, mco_inc_dir: &Path) {
-    let (_, sources) = cpp_wrapper_files(build_cfg);
-
-    if !sources.is_empty() {
-        let mut build = Build::new();
-
-        build.cpp(true);
-
-        let defines = mco_defines(build_cfg);
-        for (def, val) in defines {
-            build.define(&def, val.as_deref());
-        }
-
-        for source in sources {
-            build.file(source);
-        }
-
-        let compiler = build.get_compiler();
-        if compiler.is_like_msvc() && build_cfg.debug {
-            build.flag("/MDd");
-        }
-
-        build
-            .warnings(true)
-            .extra_warnings(true)
-            .include(mco_inc_dir.to_str().unwrap())
-            .compile("cppwrapper");
-    }
-}
-
 fn output_libraries(build_cfg: &BuildConfig, mco_lib_dir: &Path) {
     println!(
         "cargo:rustc-link-search=native={}",
@@ -333,12 +295,13 @@ fn output_libraries(build_cfg: &BuildConfig, mco_lib_dir: &Path) {
     for lib in libs {
         println!("cargo:rustc-link-lib={}", lib);
     }
+
+    if let Some(cpplib) = cpp_stdlib() {
+        println!("cargo:rustc-link-lib={}", cpplib);
+    }
 }
 
 fn config_cargo_rerun() {
-    println!("cargo:rerun-if-changed=src/cpp/rssql.cpp");
-    println!("cargo:rerun-if-changed=src/cpp/rssql.h");
-
     println!("cargo:rerun-if-env-changed={}", ENV_MCO_ROOT);
     println!("cargo:rerun-if-env-changed={}", ENV_CFG_DYLIB);
     println!("cargo:rerun-if-env-changed={}", ENV_CFG_DPTR);
@@ -359,6 +322,5 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     generate_bindings(&build_cfg, &out_dir, &mco_inc);
-    build_cpp_wrapper(&build_cfg, &mco_inc);
     output_libraries(&build_cfg, &mco_lib);
 }

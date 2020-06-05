@@ -663,11 +663,11 @@ impl Type {
 #[repr(transparent)]
 pub struct Value<'a> {
     alloc: PhantomData<&'a AllocatorRef<'a>>,
-    h: exdb_sys::mcors_sql_value,
+    h: exdb_sys::mcosql_rs_value,
 }
 
 impl<'a> Value<'a> {
-    fn from_handle(h: exdb_sys::mcors_sql_value, _allocator: AllocatorRef<'a>) -> Self {
+    fn from_handle(h: exdb_sys::mcosql_rs_value, _allocator: AllocatorRef<'a>) -> Self {
         Value {
             alloc: PhantomData,
             h,
@@ -676,7 +676,7 @@ impl<'a> Value<'a> {
 
     fn new_null() -> Result<Self> {
         let mut h = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_create_null(h.as_mut_ptr()) }).and(Ok(
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_create_null(h.as_mut_ptr()) }).and(Ok(
             Value {
                 alloc: PhantomData,
                 h: unsafe { h.assume_init() },
@@ -687,7 +687,7 @@ impl<'a> Value<'a> {
     fn new_bool(val: bool) -> Result<Self> {
         let ival = if val { 1 } else { 0 };
         let mut h = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_create_bool(ival, h.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_create_bool(ival, h.as_mut_ptr()) })
             .and(Ok(Value {
                 alloc: PhantomData,
                 h: unsafe { h.assume_init() },
@@ -697,7 +697,7 @@ impl<'a> Value<'a> {
     fn new_int(val: i64, alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_int(alloc.h, val, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_create_int(alloc.h, val, h.as_mut_ptr())
         })
         .and(Ok(Value {
             alloc: PhantomData,
@@ -708,7 +708,7 @@ impl<'a> Value<'a> {
     fn new_real(val: f64, alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_real(alloc.h, val, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_create_real(alloc.h, val, h.as_mut_ptr())
         })
         .and(Ok(Value {
             alloc: PhantomData,
@@ -719,7 +719,7 @@ impl<'a> Value<'a> {
     fn new_string(val: &str, alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_string(
+            exdb_sys::mcosql_rs_value_create_string(
                 alloc.h,
                 val.as_ptr() as *const i8,
                 val.len(),
@@ -735,7 +735,7 @@ impl<'a> Value<'a> {
     fn new_binary(val: &[u8], alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_binary(
+            exdb_sys::mcosql_rs_value_create_binary(
                 alloc.h,
                 val.as_ptr() as *const c_void,
                 val.len(),
@@ -776,7 +776,7 @@ impl<'a> Value<'a> {
 
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_datetime(alloc.h, val, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_create_datetime(alloc.h, val, h.as_mut_ptr())
         })
         .and(Ok(Value {
             alloc: PhantomData,
@@ -787,7 +787,7 @@ impl<'a> Value<'a> {
     fn new_numeric(val_scaled: i64, prec: usize, alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_numeric(alloc.h, val_scaled, prec, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_create_numeric(alloc.h, val_scaled, prec, h.as_mut_ptr())
         })
         .and(Ok(Value {
             alloc: PhantomData,
@@ -798,7 +798,7 @@ impl<'a> Value<'a> {
     /// Returns the type of the contained value.
     pub fn value_type(&self) -> Result<Type> {
         let mut ty = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_type(self.h, ty.as_mut_ptr()) }).and(
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_type(self.h, ty.as_mut_ptr()) }).and(
             Type::from_mco(unsafe { ty.assume_init() })
                 .ok_or(Error::new_sql(mcosql_error_code::RUNTIME_ERROR)),
         )
@@ -812,19 +812,19 @@ impl<'a> Value<'a> {
     /// - `Array`: number of elements.
     pub fn size(&self) -> Result<usize> {
         let mut ret = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_size(self.h, ret.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_size(self.h, ret.as_mut_ptr()) })
             .and(Ok(unsafe { ret.assume_init() }))
     }
 
     /// Returns `true` if the value is an SQL `null` value.
     pub fn is_null(&self) -> bool {
-        0 != unsafe { exdb_sys::mcors_sql_value_is_null(self.h) }
+        0 != unsafe { exdb_sys::mcosql_rs_value_is_null(self.h) }
     }
 
     /// Returns `true` if the value is a boolean `true` value, or a non-zero
     /// integer.
     pub fn is_true(&self) -> bool {
-        0 != unsafe { exdb_sys::mcors_sql_value_is_true(self.h) }
+        0 != unsafe { exdb_sys::mcosql_rs_value_is_true(self.h) }
     }
 
     /// Casts the value to `i64`.
@@ -833,7 +833,7 @@ impl<'a> Value<'a> {
     /// returned.
     pub fn to_i64(&self) -> Result<i64> {
         let mut val = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_int(self.h, val.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_int(self.h, val.as_mut_ptr()) })
             .and(Ok(unsafe { val.assume_init() }))
     }
 
@@ -843,7 +843,7 @@ impl<'a> Value<'a> {
     /// returned.
     pub fn to_real(&self) -> Result<f64> {
         let mut val = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_real(self.h, val.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_real(self.h, val.as_mut_ptr()) })
             .and(Ok(unsafe { val.assume_init() }))
     }
 
@@ -854,7 +854,7 @@ impl<'a> Value<'a> {
     /// compatible custom function.
     pub fn to_date_time(&self) -> Result<u64> {
         let mut val = MaybeUninit::uninit();
-        result_from_code(unsafe { exdb_sys::mcors_sql_value_datetime(self.h, val.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_value_datetime(self.h, val.as_mut_ptr()) })
             .and(Ok(unsafe { val.assume_init() }))
     }
 
@@ -890,7 +890,7 @@ impl<'a> Value<'a> {
             let mut val = 0i64;
             let mut prec = 0usize;
             result_from_code(unsafe {
-                exdb_sys::mcors_sql_value_numeric(self.h, &mut val, &mut prec)
+                exdb_sys::mcosql_rs_value_numeric(self.h, &mut val, &mut prec)
             })
             .and(
                 Numeric::new(val, prec).ok_or(Error::new_sql(mcosql_error_code::INVALID_TYPE_CAST)),
@@ -905,7 +905,7 @@ impl<'a> Value<'a> {
         let alloc = allocator::Owned::new()?;
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_string_ref(self.h, alloc.h, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_string_ref(self.h, alloc.h, h.as_mut_ptr())
         })?;
         let sref = Ref::from_handle(unsafe { h.assume_init() }, &alloc);
         let data = unsafe { slice::from_raw_parts(sref.pointer()? as *const u8, sref.size()?) };
@@ -930,7 +930,7 @@ impl<'a> Value<'a> {
         let alloc = allocator::Owned::new()?;
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_binary(self.h, alloc.h, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_binary(self.h, alloc.h, h.as_mut_ptr())
         })?;
         let sref = Ref::from_handle(unsafe { h.assume_init() }, &alloc);
         let data = unsafe { slice::from_raw_parts(sref.pointer()? as *const u8, sref.size()?) };
@@ -979,14 +979,14 @@ impl<'a> Value<'a> {
 
     unsafe fn pointer(&self) -> Result<*const c_void> {
         let mut p = MaybeUninit::uninit();
-        result_from_code(exdb_sys::mcors_sql_value_ptr(self.h, p.as_mut_ptr()))
+        result_from_code(exdb_sys::mcosql_rs_value_ptr(self.h, p.as_mut_ptr()))
             .and(Ok(p.assume_init()))
     }
 
     // Highly unsafe: must be released using the allocator which was used to allocate the value;
     // leaves the value in the invalid state.
     unsafe fn release(&self, alloc: AllocatorRef) -> Result<()> {
-        result_from_code(exdb_sys::mcors_sql_value_release(alloc.h, self.h))
+        result_from_code(exdb_sys::mcosql_rs_value_release(alloc.h, self.h))
     }
 }
 
@@ -1014,12 +1014,12 @@ impl<'a> From<Blob<'a>> for Value<'a> {
 /// value's allocator, making it possible to release the value when the
 /// reference goes out of scope.
 pub struct Ref<'a> {
-    r: exdb_sys::mcors_sql_value_ref,
+    r: exdb_sys::mcosql_rs_value_ref,
     owner: PhantomData<&'a ()>,
 }
 
 impl<'a> Ref<'a> {
-    pub(crate) fn from_handle<T>(r: exdb_sys::mcors_sql_value_ref, _owner: &'a T) -> Self {
+    pub(crate) fn from_handle<T>(r: exdb_sys::mcosql_rs_value_ref, _owner: &'a T) -> Self {
         Ref {
             r,
             owner: PhantomData,
@@ -1032,7 +1032,7 @@ impl<'a> Ref<'a> {
 
     fn defused_clone(&'a self) -> Ref<'a> {
         Ref {
-            r: exdb_sys::mcors_sql_value_ref {
+            r: exdb_sys::mcosql_rs_value_ref {
                 allocator: ptr::null_mut(),
                 ref_: self.r.ref_,
             },
@@ -1055,7 +1055,7 @@ impl<'a> Ref<'a> {
 
     // Unsafe: new value must be allocated by the same allocator and produced by the same owner;
     // no other references to the value must be held.
-    unsafe fn replace_value(&mut self, new_value: exdb_sys::mcors_sql_value) {
+    unsafe fn replace_value(&mut self, new_value: exdb_sys::mcosql_rs_value) {
         self.release_value();
         self.r.ref_ = new_value;
     }
@@ -1067,7 +1067,7 @@ impl<'a> Deref for Ref<'a> {
     fn deref(&self) -> &Self::Target {
         assert!(!self.is_null_ref());
 
-        unsafe { &*(&self.r.ref_ as *const exdb_sys::mcors_sql_value as *const Value) }
+        unsafe { &*(&self.r.ref_ as *const exdb_sys::mcosql_rs_value as *const Value) }
     }
 }
 
@@ -1097,7 +1097,7 @@ impl<'a> Array<'a> {
         let mut h = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_value_create_array(
+            exdb_sys::mcosql_rs_value_create_array(
                 alloc.h,
                 T::static_type() as mcosql_column_type::Type,
                 items.len(),
@@ -1115,7 +1115,7 @@ impl<'a> Array<'a> {
     fn is_plain(&self) -> bool {
         let mut plain = 0i32;
 
-        let rc = unsafe { exdb_sys::mcors_sql_array_is_plain(self.val.h, &mut plain) };
+        let rc = unsafe { exdb_sys::mcosql_rs_array_is_plain(self.val.h, &mut plain) };
         // Not expected to fail unless something is really wrong
         debug_assert_eq!(mcosql_error_code::SQL_OK, rc);
 
@@ -1127,7 +1127,7 @@ impl<'a> Array<'a> {
         let mut ty = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_array_elem_type(self.val.h, ty.as_mut_ptr())
+            exdb_sys::mcosql_rs_array_elem_type(self.val.h, ty.as_mut_ptr())
         })
         .and(
             Type::from_mco(unsafe { ty.assume_init() })
@@ -1145,7 +1145,7 @@ impl<'a> Array<'a> {
         let mut h = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_array_get_at(self.val.h, at, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_array_get_at(self.val.h, at, h.as_mut_ptr())
         })
         .and(Ok(Ref::from_handle(unsafe { h.assume_init() }, self)))
     }
@@ -1154,7 +1154,7 @@ impl<'a> Array<'a> {
         let mut alloc_h = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_array_allocator(self.val.h, alloc_h.as_mut_ptr())
+            exdb_sys::mcosql_rs_array_allocator(self.val.h, alloc_h.as_mut_ptr())
         })
         .and(Ok(AllocatorRef::from_handle(
             unsafe { alloc_h.assume_init() },
@@ -1187,7 +1187,7 @@ impl<'a> Array<'a> {
             // Values do not implement Drop. Hence, the handle of the allocated value will
             // remain valid when val goes out of scope.
             let val = body[i].to_value(alloc)?;
-            result_from_code(unsafe { exdb_sys::mcors_sql_array_set_at(self.val.h, i, val.h) })?;
+            result_from_code(unsafe { exdb_sys::mcosql_rs_array_set_at(self.val.h, i, val.h) })?;
         }
 
         Ok(())
@@ -1198,7 +1198,7 @@ impl<'a> Array<'a> {
         debug_assert!(self.is_plain());
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_array_set_body(
+            exdb_sys::mcosql_rs_array_set_body(
                 self.val.h,
                 body.as_ptr() as *const c_void,
                 body.len(),
@@ -1258,7 +1258,7 @@ impl<'a> Sequence<'a> {
     pub fn elem_type(&self) -> Result<Type> {
         let mut ty = MaybeUninit::uninit();
 
-        result_from_code(unsafe { exdb_sys::mcors_sql_seq_elem_type(self.val.h, ty.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_seq_elem_type(self.val.h, ty.as_mut_ptr()) })
             .and(
                 Type::from_mco(unsafe { ty.assume_init() })
                     .ok_or(Error::new_sql(mcosql_error_code::RUNTIME_ERROR)),
@@ -1269,7 +1269,7 @@ impl<'a> Sequence<'a> {
     pub fn count(&self) -> Result<usize> {
         let mut ret = MaybeUninit::uninit();
 
-        result_from_code(unsafe { exdb_sys::mcors_sql_seq_count(self.val.h, ret.as_mut_ptr()) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_seq_count(self.val.h, ret.as_mut_ptr()) })
             .and(Ok(unsafe { ret.assume_init() }))
     }
 
@@ -1281,17 +1281,17 @@ impl<'a> Sequence<'a> {
     }
 
     fn get_iterator(&self) -> Result<()> {
-        result_from_code(unsafe { exdb_sys::mcors_sql_seq_get_iterator(self.val.h) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_seq_get_iterator(self.val.h) })
     }
 
     fn reset(&self) -> Result<()> {
-        result_from_code(unsafe { exdb_sys::mcors_sql_seq_reset(self.val.h) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_seq_reset(self.val.h) })
     }
 
-    unsafe fn next(&self) -> Result<exdb_sys::mcors_sql_value> {
+    unsafe fn next(&self) -> Result<exdb_sys::mcosql_rs_value> {
         let mut ret = MaybeUninit::uninit();
 
-        result_from_code(exdb_sys::mcors_sql_seq_next(self.val.h, ret.as_mut_ptr()))
+        result_from_code(exdb_sys::mcosql_rs_seq_next(self.val.h, ret.as_mut_ptr()))
             .and(Ok(ret.assume_init()))
     }
 
@@ -1299,7 +1299,7 @@ impl<'a> Sequence<'a> {
         let mut alloc = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_seq_allocator(self.val.h, alloc.as_mut_ptr())
+            exdb_sys::mcosql_rs_seq_allocator(self.val.h, alloc.as_mut_ptr())
         })
         .and(Ok(AllocatorRef::from_handle(
             unsafe { alloc.assume_init() },
@@ -1324,7 +1324,7 @@ pub struct SequenceIterator<'a> {
 impl<'a> SequenceIterator<'a> {
     fn new(seq: &'a Sequence<'a>) -> Self {
         let alloc = seq.allocator().unwrap();
-        let r = exdb_sys::mcors_sql_value_ref {
+        let r = exdb_sys::mcosql_rs_value_ref {
             allocator: alloc.h,
             ref_: ptr::null_mut(),
         };
@@ -1474,7 +1474,7 @@ impl<'a> Blob<'a> {
     /// segments, this can be equal to the size of one segment.
     pub fn available(&self) -> Result<usize> {
         let mut avail = 0usize;
-        result_from_code(unsafe { exdb_sys::mcors_sql_blob_available(self.val.h, &mut avail) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_blob_available(self.val.h, &mut avail) })
             .and(Ok(avail))
     }
 
@@ -1502,7 +1502,7 @@ impl<'a> Blob<'a> {
 
     /// Resets the blob's read pointer.
     pub fn reset(&self) -> Result<()> {
-        result_from_code(unsafe { exdb_sys::mcors_sql_blob_reset(self.val.h, 0) })
+        result_from_code(unsafe { exdb_sys::mcosql_rs_blob_reset(self.val.h, 0) })
     }
 
     unsafe fn get_raw(&self, p: *mut c_void, l: usize) -> Result<usize> {
@@ -1511,7 +1511,7 @@ impl<'a> Blob<'a> {
         while total < l {
             let mut nread = 0usize;
 
-            result_from_code(exdb_sys::mcors_sql_blob_get(
+            result_from_code(exdb_sys::mcosql_rs_blob_get(
                 self.val.h,
                 p.add(total),
                 l - total,

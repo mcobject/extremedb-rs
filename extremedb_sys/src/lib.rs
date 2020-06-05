@@ -11,8 +11,6 @@
 //!
 //! - Produces Rust declarations for the *e*X*treme*DB public C API functions
 //! using Rust's [`bindgen`];
-//! - Builds the C wrapper library for the *e*X*treme*DB SQL C++ API using
-//! [`cc`];
 //! - Instructs Cargo to link the *e*X*treme*DB libraries.
 //!
 //! The exact set of the linked *e*X*treme*DB libraries depends on the
@@ -21,7 +19,6 @@
 //! # Prerequisites
 //!
 //! - Clang for [`bindgen`];
-//! - Target compiler to build the C++ wrapper library.
 //!
 //! # Configuration
 //!
@@ -83,7 +80,6 @@
 //!
 //! [McObject]: https://www.mcobject.com
 //! [`bindgen`]: https://crates.io/crates/bindgen
-//! [`cc`]: https://crates.io/crates/cc
 
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]

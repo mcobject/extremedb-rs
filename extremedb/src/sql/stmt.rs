@@ -29,12 +29,12 @@ impl Statement {
         let mut n_records = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_statement_execute(
+            exdb_sys::mcosql_rs_statement_execute(
                 ctx.engine,
                 ctx.transaction,
                 n_records.as_mut_ptr(),
                 sql.as_ptr() as *const i8,
-                sql_values.as_mut_ptr() as *mut exdb_sys::mcors_sql_value,
+                sql_values.as_mut_ptr() as *mut exdb_sys::mcosql_rs_value,
                 sql_values.len(),
             )
         })
@@ -51,12 +51,12 @@ impl Statement {
         let mut ds = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcors_sql_query_execute(
+            exdb_sys::mcosql_rs_query_execute(
                 ctx.engine,
                 ctx.transaction,
                 ds.as_mut_ptr(),
                 sql.as_ptr() as *const i8,
-                sql_values.as_mut_ptr() as *mut exdb_sys::mcors_sql_value,
+                sql_values.as_mut_ptr() as *mut exdb_sys::mcosql_rs_value,
                 sql_values.len(),
             )
         })?;
