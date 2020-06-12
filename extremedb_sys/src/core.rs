@@ -4,6 +4,7 @@
 // Copyright (c) 2020 McObject LLC
 // All Rights Reserved
 
+pub type size_t = ::std::os::raw::c_ulong;
 pub type mco_iquad = ::std::os::raw::c_longlong;
 pub type mco_uquad = ::std::os::raw::c_ulonglong;
 pub type mco_uint1 = ::std::os::raw::c_uchar;
@@ -606,60 +607,74 @@ pub type mco_db_params_t = mco_db_params_t_;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct mco_device_t_dev_conv {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_1 {
     pub ptr: *mut ::std::os::raw::c_void,
     pub flags: ::std::os::raw::c_int,
 }
 
+pub type mco_device_t_dev_conv = mco_device_t___bindgen_ty_1__bindgen_ty_1;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct mco_device_t_dev_named {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_2 {
     pub name: [::std::os::raw::c_char; 64usize],
     pub flags: ::std::os::raw::c_uint,
     pub hint: *mut ::std::os::raw::c_void,
 }
 
+pub type mco_device_t_dev_named = mco_device_t___bindgen_ty_1__bindgen_ty_2;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct mco_device_t_dev_file {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_3 {
     pub flags: ::std::os::raw::c_int,
     pub name: [::std::os::raw::c_char; 256usize],
 }
 
+pub type mco_device_t_dev_file = mco_device_t___bindgen_ty_1__bindgen_ty_3;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct mco_device_t_dev_multifile {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_4 {
     pub flags: ::std::os::raw::c_int,
     pub name: [::std::os::raw::c_char; 64usize],
     pub segment_size: mco_offs_t,
 }
 
+pub type mco_device_t_dev_multifile = mco_device_t___bindgen_ty_1__bindgen_ty_4;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct mco_device_t_dev_raid {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_5 {
     pub flags: ::std::os::raw::c_int,
     pub name: [::std::os::raw::c_char; 64usize],
     pub level: ::std::os::raw::c_int,
     pub offset: mco_offs_t,
 }
 
+pub type mco_device_t_dev_raid = mco_device_t___bindgen_ty_1__bindgen_ty_5;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct mco_device_t_dev_idesc {
+pub struct mco_device_t___bindgen_ty_1__bindgen_ty_6 {
     pub handle: ::std::os::raw::c_ulong,
 }
 
+pub type mco_device_t_dev_idesc = mco_device_t___bindgen_ty_1__bindgen_ty_6;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union mco_device_t_dev {
-    pub conv: mco_device_t_dev_conv,
-    pub named: mco_device_t_dev_named,
-    pub file: mco_device_t_dev_file,
-    pub multifile: mco_device_t_dev_multifile,
-    pub raid: mco_device_t_dev_raid,
-    pub idesc: mco_device_t_dev_idesc,
+pub union mco_device_t___bindgen_ty_1 {
+    pub conv: mco_device_t___bindgen_ty_1__bindgen_ty_1,
+    pub named: mco_device_t___bindgen_ty_1__bindgen_ty_2,
+    pub file: mco_device_t___bindgen_ty_1__bindgen_ty_3,
+    pub multifile: mco_device_t___bindgen_ty_1__bindgen_ty_4,
+    pub raid: mco_device_t___bindgen_ty_1__bindgen_ty_5,
+    pub idesc: mco_device_t___bindgen_ty_1__bindgen_ty_6,
     _bindgen_union_align: [u64; 33usize],
 }
+
+pub type mco_device_t_dev = mco_device_t___bindgen_ty_1;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -667,7 +682,7 @@ pub struct mco_device_t_ {
     pub type_: ::std::os::raw::c_uint,
     pub assignment: ::std::os::raw::c_uint,
     pub size: mco_size_t,
-    pub dev: mco_device_t_dev,
+    pub dev: mco_device_t___bindgen_ty_1,
 }
 
 pub type mco_device_t = mco_device_t_;
@@ -804,19 +819,23 @@ pub type mco_dict_struct_t = mco_dict_struct_t_;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union mco_dictionary_t_init_i_data {
+pub union mco_dictionary_t___bindgen_ty_1 {
     pub ptr: *const int4,
     pub offs: mco_offs_t,
     _bindgen_union_align: u64,
 }
 
+pub type mco_dictionary_t_init_i_data = mco_dictionary_t___bindgen_ty_1;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union mco_dictionary_t_init_d_data {
+pub union mco_dictionary_t___bindgen_ty_2 {
     pub ptr: *const f64,
     pub offs: mco_offs_t,
     _bindgen_union_align: u64,
 }
+
+pub type mco_dictionary_t_init_d_data = mco_dictionary_t___bindgen_ty_2;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -852,9 +871,9 @@ pub struct mco_dictionary_t_ {
     pub v_desc_colls: *const mco_dict_collation_t,
     pub sizeof_mco_offs_t: [uint1; 2usize],
     pub sizeof_mco_size_t: [uint1; 2usize],
-    pub init_i_data: mco_dictionary_t_init_i_data,
+    pub init_i_data: mco_dictionary_t___bindgen_ty_1,
     pub init_i_data_n: uint4,
-    pub init_d_data: mco_dictionary_t_init_d_data,
+    pub init_d_data: mco_dictionary_t___bindgen_ty_2,
     pub init_d_data_n: uint4,
     pub class_code_origin: uint4,
 }

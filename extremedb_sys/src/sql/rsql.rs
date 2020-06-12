@@ -22,8 +22,8 @@ extern "C" {
         server: *mut sqlsrv_t,
         engine: storage_t,
         port: ::std::os::raw::c_int,
-        bufferSize: usize,
-        nThreads: usize,
+        bufferSize: size_t,
+        nThreads: size_t,
         listenQueueSize: ::std::os::raw::c_int,
         handler: sqlsrv_error_handler_t,
     ) -> status_t;
@@ -36,7 +36,7 @@ extern "C" {
 }
 
 extern "C" {
-    pub fn sqlcln_create(database: *mut database_t, txBufSize: usize) -> status_t;
+    pub fn sqlcln_create(database: *mut database_t, txBufSize: size_t) -> status_t;
 
     pub fn sqlcln_open(
         database: database_t,

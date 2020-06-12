@@ -78,6 +78,9 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+// Fail if any structs or unions are not repr(C)/repr(transparent).
+#![deny(improper_ctypes)]
+
 mod core;
 pub use crate::core::*;
 

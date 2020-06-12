@@ -165,12 +165,12 @@ extern "C" {
 
     pub fn mcosql_get_number_of_columns(
         data_source: data_source_t,
-        n_columns: *mut usize,
+        n_columns: *mut size_t,
     ) -> status_t;
 
     pub fn mcosql_get_column_info(
         data_source: data_source_t,
-        col_no: usize,
+        col_no: size_t,
         type_: *mut type_t,
         name: *mut *mut ::std::os::raw::c_char,
     ) -> status_t;
@@ -232,34 +232,34 @@ extern "C" {
     pub fn mcosql_rs_value_create_numeric(
         allocator: mcosql_rs_allocator,
         val: mco_int8,
-        prec: usize,
+        prec: size_t,
         out: *mut mcosql_rs_value,
     ) -> status_t;
 
     pub fn mcosql_rs_value_create_string(
         allocator: mcosql_rs_allocator,
         p: *const ::std::os::raw::c_char,
-        len: usize,
+        len: size_t,
         out: *mut mcosql_rs_value,
     ) -> status_t;
 
     pub fn mcosql_rs_value_create_binary(
         allocator: mcosql_rs_allocator,
         p: *const ::std::os::raw::c_void,
-        len: usize,
+        len: size_t,
         out: *mut mcosql_rs_value,
     ) -> status_t;
 
     pub fn mcosql_rs_value_create_array(
         allocator: mcosql_rs_allocator,
         elem_type: type_t,
-        size: usize,
+        size: size_t,
         out: *mut mcosql_rs_value,
     ) -> status_t;
 
     pub fn mcosql_rs_value_type(val: mcosql_rs_value, out: *mut type_t) -> status_t;
 
-    pub fn mcosql_rs_value_size(val: mcosql_rs_value, out: *mut usize) -> status_t;
+    pub fn mcosql_rs_value_size(val: mcosql_rs_value, out: *mut size_t) -> status_t;
 
     pub fn mcosql_rs_value_is_null(val: mcosql_rs_value) -> ::std::os::raw::c_int;
 
@@ -274,7 +274,7 @@ extern "C" {
     pub fn mcosql_rs_value_numeric(
         val: mcosql_rs_value,
         out_value: *mut mco_int8,
-        out_precision: *mut usize,
+        out_precision: *mut size_t,
     ) -> status_t;
 
     pub fn mcosql_rs_value_string_ref(
@@ -308,20 +308,20 @@ extern "C" {
 
     pub fn mcosql_rs_array_get_at(
         array: mcosql_rs_value,
-        at: usize,
+        at: size_t,
         out: *mut mcosql_rs_value_ref,
     ) -> status_t;
 
     pub fn mcosql_rs_array_set_at(
         array: mcosql_rs_value,
-        at: usize,
+        at: size_t,
         value: mcosql_rs_value,
     ) -> status_t;
 
     pub fn mcosql_rs_array_set_body(
         array: mcosql_rs_value,
         elems: *const ::std::os::raw::c_void,
-        n_elems: usize,
+        n_elems: size_t,
     ) -> status_t;
 
     pub fn mcosql_rs_seq_allocator(
@@ -329,7 +329,7 @@ extern "C" {
         allocator: *mut mcosql_rs_allocator,
     ) -> status_t;
 
-    pub fn mcosql_rs_seq_count(sequence: mcosql_rs_value, out: *mut usize) -> status_t;
+    pub fn mcosql_rs_seq_count(sequence: mcosql_rs_value, out: *mut size_t) -> status_t;
 
     pub fn mcosql_rs_seq_elem_type(sequence: mcosql_rs_value, out: *mut type_t) -> status_t;
 
@@ -339,16 +339,16 @@ extern "C" {
 
     pub fn mcosql_rs_seq_next(sequence: mcosql_rs_value, out: *mut mcosql_rs_value) -> status_t;
 
-    pub fn mcosql_rs_blob_available(blob: mcosql_rs_value, out: *mut usize) -> status_t;
+    pub fn mcosql_rs_blob_available(blob: mcosql_rs_value, out: *mut size_t) -> status_t;
 
     pub fn mcosql_rs_blob_get(
         blob: mcosql_rs_value,
         buf: *mut ::std::os::raw::c_void,
-        size: usize,
-        out: *mut usize,
+        size: size_t,
+        out: *mut size_t,
     ) -> status_t;
 
-    pub fn mcosql_rs_blob_reset(blob: mcosql_rs_value, pos: usize) -> status_t;
+    pub fn mcosql_rs_blob_reset(blob: mcosql_rs_value, pos: size_t) -> status_t;
 
     pub fn mcosql_rs_value_release(
         allocator: mcosql_rs_allocator,
@@ -361,7 +361,7 @@ extern "C" {
         n_records: *mut mco_int8,
         sql: *const ::std::os::raw::c_char,
         values: *mut mcosql_rs_value,
-        n_values: usize,
+        n_values: size_t,
     ) -> status_t;
 
     pub fn mcosql_rs_query_execute(
@@ -370,7 +370,7 @@ extern "C" {
         data_source: *mut data_source_t,
         sql: *const ::std::os::raw::c_char,
         values: *mut mcosql_rs_value,
-        n_values: usize,
+        n_values: size_t,
     ) -> status_t;
 
     pub fn mcosql_rs_record_allocator(
@@ -380,7 +380,7 @@ extern "C" {
 
     pub fn mcosql_rs_record_get_column_value_ref(
         record: record_t,
-        column_no: usize,
+        column_no: size_t,
         out: *mut mcosql_rs_value_ref,
     ) -> status_t;
 }
