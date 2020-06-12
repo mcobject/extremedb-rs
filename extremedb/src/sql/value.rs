@@ -722,7 +722,7 @@ impl<'a> Value<'a> {
             exdb_sys::mcosql_rs_value_create_string(
                 alloc.h,
                 val.as_ptr() as *const i8,
-                val.len(),
+                val.len() as exdb_sys::size_t,
                 h.as_mut_ptr(),
             )
         })
@@ -738,7 +738,7 @@ impl<'a> Value<'a> {
             exdb_sys::mcosql_rs_value_create_binary(
                 alloc.h,
                 val.as_ptr() as *const c_void,
-                val.len(),
+                val.len() as exdb_sys::size_t,
                 h.as_mut_ptr(),
             )
         })
@@ -787,7 +787,12 @@ impl<'a> Value<'a> {
     fn new_numeric(val_scaled: i64, prec: usize, alloc: AllocatorRef<'a>) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
         result_from_code(unsafe {
-            exdb_sys::mcosql_rs_value_create_numeric(alloc.h, val_scaled, prec, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_value_create_numeric(
+                alloc.h,
+                val_scaled,
+                prec as exdb_sys::size_t,
+                h.as_mut_ptr(),
+            )
         })
         .and(Ok(Value {
             alloc: PhantomData,
@@ -813,7 +818,7 @@ impl<'a> Value<'a> {
     pub fn size(&self) -> Result<usize> {
         let mut ret = MaybeUninit::uninit();
         result_from_code(unsafe { exdb_sys::mcosql_rs_value_size(self.h, ret.as_mut_ptr()) })
-            .and(Ok(unsafe { ret.assume_init() }))
+            .and(Ok(unsafe { ret.assume_init() } as usize))
     }
 
     /// Returns `true` if the value is an SQL `null` value.
@@ -888,12 +893,13 @@ impl<'a> Value<'a> {
     pub fn to_numeric(&self) -> Result<Numeric> {
         if self.value_type()? == Type::Numeric {
             let mut val = 0i64;
-            let mut prec = 0usize;
+            let mut prec: exdb_sys::size_t = 0;
             result_from_code(unsafe {
                 exdb_sys::mcosql_rs_value_numeric(self.h, &mut val, &mut prec)
             })
             .and(
-                Numeric::new(val, prec).ok_or(Error::new_sql(mcosql_error_code::INVALID_TYPE_CAST)),
+                Numeric::new(val, prec as usize)
+                    .ok_or(Error::new_sql(mcosql_error_code::INVALID_TYPE_CAST)),
             )
         } else {
             Err(Error::new_sql(mcosql_error_code::INVALID_TYPE_CAST))
@@ -1100,7 +1106,7 @@ impl<'a> Array<'a> {
             exdb_sys::mcosql_rs_value_create_array(
                 alloc.h,
                 T::static_type() as mcosql_column_type::Type,
-                items.len(),
+                items.len() as exdb_sys::size_t,
                 h.as_mut_ptr(),
             )
         })?;
@@ -1145,7 +1151,7 @@ impl<'a> Array<'a> {
         let mut h = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcosql_rs_array_get_at(self.val.h, at, h.as_mut_ptr())
+            exdb_sys::mcosql_rs_array_get_at(self.val.h, at as exdb_sys::size_t, h.as_mut_ptr())
         })
         .and(Ok(Ref::from_handle(unsafe { h.assume_init() }, self)))
     }
@@ -1187,7 +1193,9 @@ impl<'a> Array<'a> {
             // Values do not implement Drop. Hence, the handle of the allocated value will
             // remain valid when val goes out of scope.
             let val = body[i].to_value(alloc)?;
-            result_from_code(unsafe { exdb_sys::mcosql_rs_array_set_at(self.val.h, i, val.h) })?;
+            result_from_code(unsafe {
+                exdb_sys::mcosql_rs_array_set_at(self.val.h, i as exdb_sys::size_t, val.h)
+            })?;
         }
 
         Ok(())
@@ -1201,7 +1209,7 @@ impl<'a> Array<'a> {
             exdb_sys::mcosql_rs_array_set_body(
                 self.val.h,
                 body.as_ptr() as *const c_void,
-                body.len(),
+                body.len() as exdb_sys::size_t,
             )
         })
     }
@@ -1270,7 +1278,7 @@ impl<'a> Sequence<'a> {
         let mut ret = MaybeUninit::uninit();
 
         result_from_code(unsafe { exdb_sys::mcosql_rs_seq_count(self.val.h, ret.as_mut_ptr()) })
-            .and(Ok(unsafe { ret.assume_init() }))
+            .and(Ok(unsafe { ret.assume_init() } as usize))
     }
 
     /// Returns an iterator for the sequence.
@@ -1473,9 +1481,9 @@ impl<'a> Blob<'a> {
     /// This is *not* the total size of the blob. If the blob is split into
     /// segments, this can be equal to the size of one segment.
     pub fn available(&self) -> Result<usize> {
-        let mut avail = 0usize;
+        let mut avail: exdb_sys::size_t = 0;
         result_from_code(unsafe { exdb_sys::mcosql_rs_blob_available(self.val.h, &mut avail) })
-            .and(Ok(avail))
+            .and(Ok(avail as usize))
     }
 
     /// Reads the blob data into the buffer.
@@ -1506,15 +1514,16 @@ impl<'a> Blob<'a> {
     }
 
     unsafe fn get_raw(&self, p: *mut c_void, l: usize) -> Result<usize> {
-        let mut total = 0usize;
+        let mut total: exdb_sys::size_t = 0;
+        let lsz = l as exdb_sys::size_t;
 
-        while total < l {
-            let mut nread = 0usize;
+        while total < lsz {
+            let mut nread: exdb_sys::size_t = 0;
 
             result_from_code(exdb_sys::mcosql_rs_blob_get(
                 self.val.h,
-                p.add(total),
-                l - total,
+                p.add(total as usize),
+                lsz - total,
                 &mut nread,
             ))?;
 
@@ -1525,7 +1534,7 @@ impl<'a> Blob<'a> {
             }
         }
 
-        Ok(total)
+        Ok(total as usize)
     }
 }
 

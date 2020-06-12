@@ -35,7 +35,7 @@ impl Statement {
                 n_records.as_mut_ptr(),
                 sql.as_ptr() as *const i8,
                 sql_values.as_mut_ptr() as *mut exdb_sys::mcosql_rs_value,
-                sql_values.len(),
+                sql_values.len() as exdb_sys::size_t,
             )
         })
         .and(Ok(unsafe { n_records.assume_init() }))
@@ -57,7 +57,7 @@ impl Statement {
                 ds.as_mut_ptr(),
                 sql.as_ptr() as *const i8,
                 sql_values.as_mut_ptr() as *mut exdb_sys::mcosql_rs_value,
-                sql_values.len(),
+                sql_values.len() as exdb_sys::size_t,
             )
         })?;
 

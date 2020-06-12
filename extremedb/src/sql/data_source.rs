@@ -160,7 +160,7 @@ impl<'a> DataSource<'a> {
         result_from_code(unsafe {
             exdb_sys::mcosql_get_number_of_columns(self.h, ret.as_mut_ptr())
         })
-        .and(Ok(unsafe { ret.assume_init() }))
+        .and(Ok(unsafe { ret.assume_init() } as usize))
     }
 
     /// Returns the type and the name of the column at index `col`.
@@ -169,7 +169,12 @@ impl<'a> DataSource<'a> {
         let mut pname = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcosql_get_column_info(self.h, col, mco_ty.as_mut_ptr(), pname.as_mut_ptr())
+            exdb_sys::mcosql_get_column_info(
+                self.h,
+                col as exdb_sys::size_t,
+                mco_ty.as_mut_ptr(),
+                pname.as_mut_ptr(),
+            )
         })?;
 
         let ty = Type::from_mco(unsafe { mco_ty.assume_init() })
@@ -286,7 +291,11 @@ impl<'a> Record<'a> {
         let mut ret = MaybeUninit::uninit();
 
         result_from_code(unsafe {
-            exdb_sys::mcosql_rs_record_get_column_value_ref(self.h, col, ret.as_mut_ptr())
+            exdb_sys::mcosql_rs_record_get_column_value_ref(
+                self.h,
+                col as exdb_sys::size_t,
+                ret.as_mut_ptr(),
+            )
         })
         .and(Ok(Ref::from_handle(unsafe { ret.assume_init() }, self)))
     }

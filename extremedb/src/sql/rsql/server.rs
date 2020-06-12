@@ -138,8 +138,8 @@ impl<'a> Server<'a> {
                 h.as_mut_ptr(),
                 engine.h as exdb_sys::storage_t,
                 params.port as i32,
-                params.buf_size,
-                params.threads,
+                params.buf_size as exdb_sys::size_t,
+                params.threads as exdb_sys::size_t,
                 params.listen_queue_size as i32,
                 None,
             )

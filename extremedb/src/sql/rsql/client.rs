@@ -183,7 +183,9 @@ impl<'a> RemoteEngine<'a> {
     pub fn connect(_runtime: &'a Runtime, params: Params) -> Result<Self> {
         let mut h = MaybeUninit::uninit();
 
-        result_from_code(unsafe { exdb_sys::sqlcln_create(h.as_mut_ptr(), params.tx_buf_size) })?;
+        result_from_code(unsafe {
+            exdb_sys::sqlcln_create(h.as_mut_ptr(), params.tx_buf_size as exdb_sys::size_t)
+        })?;
 
         let h = unsafe { h.assume_init() };
 
