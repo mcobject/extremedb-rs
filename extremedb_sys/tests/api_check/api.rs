@@ -65,6 +65,7 @@ impl From<LexError> for Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 // An enum parsed from a constified enum module.
+#[derive(Debug)]
 struct ConstEnum {
     ty: syn::Type,
     variants: HashMap<syn::Ident, i64>,
@@ -146,6 +147,7 @@ impl TryFrom<syn::ItemMod> for ConstEnum {
     }
 }
 
+#[derive(Debug)]
 struct Struct {
     fields: Vec<(syn::Ident, syn::Type)>,
 }
@@ -175,6 +177,7 @@ impl TryFrom<syn::ItemStruct> for Struct {
     }
 }
 
+#[derive(Debug)]
 struct Union {
     fields: Vec<(syn::Ident, syn::Type)>,
 }
@@ -199,6 +202,7 @@ impl TryFrom<syn::ItemUnion> for Union {
     }
 }
 
+#[derive(Debug)]
 struct Function {
     abi: Option<String>,
     args: Vec<(syn::Ident, syn::Type)>,
@@ -265,6 +269,7 @@ impl TryFrom<syn::Signature> for Function {
 }
 
 // Contains API information.
+#[derive(Debug)]
 pub struct Api {
     typedefs: HashMap<syn::Ident, syn::Type>,
     enums: HashMap<syn::Ident, ConstEnum>,
@@ -755,5 +760,464 @@ impl Matcher {
         } else {
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quote::quote;
+
+    fn new_ident(i: &str) -> syn::Ident {
+        syn::Ident::new(i, Span::call_site())
+    }
+
+    fn assert_type_is(ty: &syn::Type, what: &str) {
+        let what_ty: syn::Type = syn::parse_str(what).unwrap();
+        assert_eq!(ty, &what_ty);
+    }
+
+    fn assert_field_is(f: &(syn::Ident, syn::Type), name: &str, ty: &str) {
+        assert_type_is(&f.1, ty);
+        assert_eq!(&f.0, &new_ident(name));
+    }
+
+    #[test]
+    fn parse_const_enum() -> Result<()> {
+        let tokens = quote! {
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+        };
+
+        let item: syn::ItemMod = syn::parse2(tokens).unwrap();
+        let e = ConstEnum::try_from(item)?;
+
+        assert_type_is(&e.ty, "u32");
+        assert_eq!(e.variants.len(), 3);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_1")).unwrap(), &1);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_2")).unwrap(), &2);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_3")).unwrap(), &3);
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_const_enum_no_type_fails() {
+        let tokens = quote! {
+            pub mod ConstifiedEnum {
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+        };
+
+        let item: syn::ItemMod = syn::parse2(tokens).unwrap();
+        let e = ConstEnum::try_from(item);
+
+        if let Err(Error::Api(ApiError::InvalidEnumMod(ident))) = e {
+            assert_eq!(ident, "ConstifiedEnum".to_string())
+        } else {
+            panic!("Unexpected result {:?}", e)
+        }
+    }
+
+    #[test]
+    fn parse_const_enum_no_items_fails() {
+        let tokens = quote! {
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+            }
+        };
+
+        let item: syn::ItemMod = syn::parse2(tokens).unwrap();
+        let e = ConstEnum::try_from(item);
+
+        if let Err(Error::Api(ApiError::InvalidEnumMod(ident))) = e {
+            assert_eq!(ident, "ConstifiedEnum".to_string())
+        } else {
+            panic!("Unexpected result {:?}", e)
+        }
+    }
+
+    #[test]
+    fn parse_const_enum_unexpected_item_fails() {
+        let tokens = quote! {
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+                pub fn some_fn() -> u32 { 42 }
+            }
+        };
+
+        let item: syn::ItemMod = syn::parse2(tokens).unwrap();
+        let e = ConstEnum::try_from(item);
+
+        if let Err(Error::Api(ApiError::InvalidEnumMod(ident))) = e {
+            assert_eq!(ident, "ConstifiedEnum".to_string())
+        } else {
+            panic!("Unexpected result {:?}", e)
+        }
+    }
+
+    #[test]
+    fn parse_struct() -> Result<()> {
+        let tokens = quote! {
+            pub struct Structure {
+                pub field1: u32,
+                pub field2: u64,
+            }
+        };
+
+        let item: syn::ItemStruct = syn::parse2(tokens).unwrap();
+        let s = Struct::try_from(item)?;
+
+        assert_eq!(s.fields.len(), 2);
+        assert_field_is(s.fields.get(0).unwrap(), "field1", "u32");
+        assert_field_is(s.fields.get(1).unwrap(), "field2", "u64");
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_tuple_struct_fails() {
+        let tokens = quote! {
+            pub struct Structure(u32, u64);
+        };
+
+        let item: syn::ItemStruct = syn::parse2(tokens).unwrap();
+        let s = Struct::try_from(item);
+
+        if let Err(Error::Api(ApiError::InvalidStruct(ident))) = s {
+            assert_eq!(ident, "Structure".to_string())
+        } else {
+            panic!("Unexpected result {:?}", s)
+        }
+    }
+
+    #[test]
+    fn parse_union() -> Result<()> {
+        let tokens = quote! {
+            pub union Union {
+                pub field1: u32,
+                pub field2: u64,
+            }
+        };
+
+        let item: syn::ItemUnion = syn::parse2(tokens).unwrap();
+        let u = Union::try_from(item)?;
+
+        assert_eq!(u.fields.len(), 2);
+        assert_field_is(u.fields.get(0).unwrap(), "field1", "u32");
+        assert_field_is(u.fields.get(1).unwrap(), "field2", "u64");
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_function() -> Result<()> {
+        let tokens = quote! {
+            pub fn some_function(integer: i32, pointer: *const u64) -> u8;
+        };
+
+        let item: syn::ForeignItemFn = syn::parse2(tokens).unwrap();
+        let f = Function::try_from(item.sig)?;
+
+        assert!(f.abi.is_none());
+        assert_eq!(f.args.len(), 2);
+        assert!(!f.vararg);
+        assert!(f.ret.is_some());
+
+        assert_field_is(f.args.get(0).unwrap(), "integer", "i32");
+        assert_field_is(f.args.get(1).unwrap(), "pointer", "*const u64");
+        assert_type_is(&f.ret.unwrap(), "u8");
+
+        Ok(())
+    }
+
+    #[test]
+    fn api_parse_file() -> Result<()> {
+        let tokens = quote! {
+            mod child_module;  // Expected to be ignored.
+
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+
+            pub type TypeAlias = u32;
+
+            pub struct Structure {
+                pub struct_field1: u32,
+                pub struct_field2: u64,
+            }
+
+            pub union Union {
+                pub union_field1: u32,
+                pub union_field2: u64,
+            }
+
+            extern "C" {
+                pub fn some_function(arg_integer: i32, arg_pointer: *const u64) -> u8;
+            }
+        };
+
+        let file: syn::File = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_file(file)?;
+        let api = builder.finish()?;
+
+        assert_eq!(api.enums.len(), 1);
+        assert_eq!(api.typedefs.len(), 1);
+        assert_eq!(api.structs.len(), 1);
+        assert_eq!(api.unions.len(), 1);
+        assert_eq!(api.functions.len(), 1);
+
+        let e = api.enums.get(&new_ident("ConstifiedEnum")).unwrap();
+        assert_type_is(&e.ty, "u32");
+        assert_eq!(e.variants.len(), 3);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_1")).unwrap(), &1);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_2")).unwrap(), &2);
+        assert_eq!(e.variants.get(&new_ident("VARIANT_3")).unwrap(), &3);
+
+        let t = api.typedefs.get(&new_ident("TypeAlias")).unwrap();
+        assert_type_is(t, "u32");
+
+        let s = api.structs.get(&new_ident("Structure")).unwrap();
+        assert_eq!(s.fields.len(), 2);
+        assert_field_is(s.fields.get(0).unwrap(), "struct_field1", "u32");
+        assert_field_is(s.fields.get(1).unwrap(), "struct_field2", "u64");
+
+        let u = api.unions.get(&new_ident("Union")).unwrap();
+        assert_eq!(u.fields.len(), 2);
+        assert_field_is(u.fields.get(0).unwrap(), "union_field1", "u32");
+        assert_field_is(u.fields.get(1).unwrap(), "union_field2", "u64");
+
+        let f = api.functions.get(&new_ident("some_function")).unwrap();
+        assert!(f.abi.is_some());
+        assert_eq!(f.abi.as_ref().unwrap(), "C");
+        assert_eq!(f.args.len(), 2);
+        assert!(!f.vararg);
+        assert!(f.ret.is_some());
+
+        assert_field_is(f.args.get(0).unwrap(), "arg_integer", "i32");
+        assert_field_is(f.args.get(1).unwrap(), "arg_pointer", "*const u64");
+        assert_type_is(f.ret.as_ref().unwrap(), "u8");
+
+        Ok(())
+    }
+
+    #[test]
+    fn api_add_existing_enum_fails() {
+        let tokens = quote! {
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+        };
+
+        let item: syn::ItemMod = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_mod(item.clone()).unwrap();
+
+        let ret = builder.add_mod(item);
+
+        if let Err(Error::Api(ApiError::Redefined(ident))) = ret {
+            assert_eq!(ident, "ConstifiedEnum")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn api_add_existing_type_fails() {
+        let tokens = quote! {
+            pub type TypeAlias = u32;
+        };
+
+        let item: syn::ItemType = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_type(item.clone()).unwrap();
+
+        let ret = builder.add_type(item);
+
+        if let Err(Error::Api(ApiError::Redefined(ident))) = ret {
+            assert_eq!(ident, "TypeAlias")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn api_add_existing_struct_fails() {
+        let tokens = quote! {
+            pub struct Structure {
+                pub struct_field1: u32,
+                pub struct_field2: u64,
+            }
+        };
+
+        let item: syn::ItemStruct = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_struct(item.clone()).unwrap();
+
+        let ret = builder.add_struct(item);
+
+        if let Err(Error::Api(ApiError::Redefined(ident))) = ret {
+            assert_eq!(ident, "Structure")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn api_add_existing_union_fails() {
+        let tokens = quote! {
+            pub union Union {
+                pub union_field1: u32,
+                pub union_field2: u64,
+            }
+        };
+
+        let item: syn::ItemUnion = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_union(item.clone()).unwrap();
+
+        let ret = builder.add_union(item);
+
+        if let Err(Error::Api(ApiError::Redefined(ident))) = ret {
+            assert_eq!(ident, "Union")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn api_add_existing_foreign_fn_fails() {
+        let tokens = quote! {
+            extern "C" {
+                pub fn some_function(arg_integer: i32, arg_pointer: *const u64) -> u8;
+            }
+        };
+
+        let item: syn::ItemForeignMod = syn::parse2(tokens).unwrap();
+        let mut builder = Builder::new();
+        builder.add_foreign_mod(item.clone()).unwrap();
+
+        let ret = builder.add_foreign_mod(item);
+
+        if let Err(Error::Api(ApiError::Redefined(ident))) = ret {
+            assert_eq!(ident, "some_function")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn match_apis() -> Result<()> {
+        let tokens_inner = quote! {
+            mod child_module;  // Expected to be ignored.
+
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+
+            pub type TypeAlias = u32;
+
+            pub struct Structure {
+                pub field1: u32,
+                pub field2: u64,
+            }
+
+            pub union Union {
+                pub field1: u32,
+                pub field2: u64,
+            }
+
+            extern "C" {
+                pub fn some_function(integer: i32, pointer: *const u64) -> u8;
+            }
+        };
+
+        let tokens_outer = quote! {
+            extern "C" {
+                pub fn some_function(integer: i32, pointer: *const u64) -> u8;
+                pub fn another_function() -> u32;
+            }
+
+            pub type TypeAlias = u32;
+            pub type AnotherAlias = bool;
+
+            pub struct Structure {
+                pub field1: u32,
+                pub field2: u64,
+            }
+
+            pub struct AnotherStructure {
+                pub field1: f64,
+            }
+
+            pub mod ConstifiedEnum {
+                pub type Type = u32;
+                pub const VARIANT_1: Type = 1;
+                pub const VARIANT_2: Type = 2;
+                pub const VARIANT_3: Type = 3;
+            }
+
+            pub mod AnotherEnum {
+                pub type Type = u8;
+                pub const VARIANT_1: Type = 100;
+                pub const VARIANT_2: Type = 200;
+            }
+
+            pub union Union {
+                pub field1: u32,
+                pub field2: u64,
+            }
+
+            pub union AnotherUnion {
+                pub field1: Structure,
+                pub field2: AnotherStructure,
+            }
+        };
+
+        let mut bld_inner = Builder::new();
+        let mut bld_outer = Builder::new();
+
+        bld_inner.add_file(syn::parse2::<syn::File>(tokens_inner)?)?;
+        bld_outer.add_file(syn::parse2::<syn::File>(tokens_outer)?)?;
+
+        let api_inner = bld_inner.finish()?;
+        let api_outer = bld_outer.finish()?;
+
+        let m = Matcher::new();
+
+        // Matching with inner and outer APIs swapped must fail
+        let mismatch = m.match_apis(&api_outer, &api_inner);
+        assert!(mismatch.is_err());
+
+        m.match_apis(&api_inner, &api_outer)
     }
 }
