@@ -561,7 +561,12 @@ impl Matcher {
     }
 
     fn match_enum(&self, ident: &syn::Ident, inner: &ConstEnum, outer: &ConstEnum) -> Result<()> {
-        if inner.ty != outer.ty {
+        let mut ty_match = TypeMatcher::new();
+        // Clang produces enum types with different signedness on different
+        // platforms.
+        ty_match.ignore_int_sign();
+
+        if !ty_match.match_types(&inner.ty, &outer.ty) {
             return Err(Error::Mismatch(MismatchError::EnumTypeMismatch(
                 ident.to_string(),
             )));
@@ -626,6 +631,9 @@ impl Matcher {
     ) -> Result<()> {
         assert_eq!(inner.fields.len(), outer.fields.len());
 
+        let mut ty_matcher = TypeMatcher::new();
+        ty_matcher.ignore_ptr_constness();
+
         for ((inner_id, inner_ty), (outer_id, outer_ty)) in
             inner.fields.iter().zip(outer.fields.iter())
         {
@@ -637,7 +645,7 @@ impl Matcher {
                 )));
             }
 
-            if !self.match_types(inner_ty, outer_ty) {
+            if !ty_matcher.match_types(inner_ty, outer_ty) {
                 return Err(Error::Mismatch(MismatchError::StructFieldTypeMismatch(
                     ident.to_string(),
                     inner_id.to_string(),
@@ -681,6 +689,9 @@ impl Matcher {
     fn match_union_fields(&self, ident: &syn::Ident, inner: &Union, outer: &Union) -> Result<()> {
         assert_eq!(inner.fields.len(), outer.fields.len());
 
+        let mut ty_matcher = TypeMatcher::new();
+        ty_matcher.ignore_ptr_constness();
+
         for ((inner_id, inner_ty), (outer_id, outer_ty)) in
             inner.fields.iter().zip(outer.fields.iter())
         {
@@ -692,7 +703,7 @@ impl Matcher {
                 )));
             }
 
-            if !self.match_types(inner_ty, outer_ty) {
+            if !ty_matcher.match_types(inner_ty, outer_ty) {
                 return Err(Error::Mismatch(MismatchError::UnionFieldTypeMismatch(
                     ident.to_string(),
                     inner_id.to_string(),
@@ -741,6 +752,30 @@ impl Matcher {
             Ok(())
         }
     }
+}
+
+struct TypeMatcher {
+    ign_int_sign: bool,
+    ign_ptr_constness: bool,
+}
+
+impl TypeMatcher {
+    fn new() -> Self {
+        TypeMatcher {
+            ign_int_sign: false,
+            ign_ptr_constness: false,
+        }
+    }
+
+    fn ignore_int_sign(&mut self) -> &mut Self {
+        self.ign_int_sign = true;
+        self
+    }
+
+    fn ignore_ptr_constness(&mut self) -> &mut Self {
+        self.ign_ptr_constness = true;
+        self
+    }
 
     fn match_types(&self, inner: &syn::Type, outer: &syn::Type) -> bool {
         if inner == outer {
@@ -753,12 +788,37 @@ impl Matcher {
             if (inner_p.is_ptr == outer_p.is_ptr)
                 && ((inner_p.mutable == outer_p.mutable) || !inner_p.mutable)
             {
-                inner_p.target == outer_p.target
+                self.ign_ptr_constness && (inner_p.target == outer_p.target)
             } else {
                 false
             }
+        } else if let (Some(inner_u), Some(outer_u)) = (Self::unsign(inner), Self::unsign(outer)) {
+            self.ign_int_sign && (inner_u == outer_u)
         } else {
             false
+        }
+    }
+
+    fn unsign(t: &syn::Type) -> Option<syn::Type> {
+        match t {
+            syn::Type::Path(syn::TypePath {
+                qself: None,
+                path: p,
+            }) => {
+                let id = p.get_ident()?.to_string();
+                match id.as_str() {
+                    "u8" => Some(syn::parse_str("u8").unwrap()),
+                    "u16" => Some(syn::parse_str("u16").unwrap()),
+                    "u32" => Some(syn::parse_str("u32").unwrap()),
+                    "u64" => Some(syn::parse_str("u64").unwrap()),
+                    "i8" => Some(syn::parse_str("u8").unwrap()),
+                    "i16" => Some(syn::parse_str("u16").unwrap()),
+                    "i32" => Some(syn::parse_str("u32").unwrap()),
+                    "i64" => Some(syn::parse_str("u64").unwrap()),
+                    _ => None,
+                }
+            }
+            _ => None,
         }
     }
 }
@@ -1219,5 +1279,150 @@ mod tests {
         assert!(mismatch.is_err());
 
         m.match_apis(&api_inner, &api_outer)
+    }
+
+    #[test]
+    fn match_enum_types_ignore_sign() -> Result<()> {
+        let mut variants = HashMap::new();
+
+        variants.insert(new_ident("VAR1"), 1);
+        variants.insert(new_ident("VAR2"), 2);
+        variants.insert(new_ident("VAR3"), 3);
+
+        let en1 = ConstEnum {
+            ty: syn::parse_str("u32").unwrap(),
+            variants: variants.clone(),
+        };
+
+        let en2 = ConstEnum {
+            ty: syn::parse_str("i32").unwrap(),
+            variants,
+        };
+
+        let mut api_inner = Api::new();
+        let mut api_outer = Api::new();
+
+        api_inner.enums.insert(new_ident("TEST_ENUM"), en1);
+        api_outer.enums.insert(new_ident("TEST_ENUM"), en2);
+
+        let m = Matcher::new();
+        m.match_apis(&api_inner, &api_outer)
+    }
+
+    #[test]
+    fn match_types_equal() {
+        let types: Vec<syn::Type> = vec![
+            "i64",
+            "u64",
+            "::std::os::raw::c_uint",
+            "*mut ::std::os::raw::c_void",
+            "[::std::os::raw::c_char; 64usize]",
+        ]
+        .into_iter()
+        .map(|s| syn::parse_str::<syn::Type>(s).unwrap())
+        .collect();
+
+        let ty_matcher = TypeMatcher::new();
+
+        for ty in types {
+            assert!(ty_matcher.match_types(&ty, &ty));
+        }
+    }
+
+    #[test]
+    fn match_types_sign_fails() {
+        use syn::{parse_str, Type};
+        let ty_matcher = TypeMatcher::new();
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("i8").unwrap(),
+            &parse_str::<Type>("u8").unwrap()
+        ));
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("i16").unwrap(),
+            &parse_str::<Type>("u16").unwrap()
+        ));
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("i32").unwrap(),
+            &parse_str::<Type>("u32").unwrap()
+        ));
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("i64").unwrap(),
+            &parse_str::<Type>("u64").unwrap()
+        ));
+    }
+
+    #[test]
+    fn match_types_ignore_sign() {
+        use syn::{parse_str, Type};
+        let mut ty_matcher = TypeMatcher::new();
+        ty_matcher.ignore_int_sign();
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("i8").unwrap(),
+            &parse_str::<Type>("u8").unwrap()
+        ));
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("i16").unwrap(),
+            &parse_str::<Type>("u16").unwrap()
+        ));
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("i32").unwrap(),
+            &parse_str::<Type>("u32").unwrap()
+        ));
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("i64").unwrap(),
+            &parse_str::<Type>("u64").unwrap()
+        ));
+    }
+
+    #[test]
+    fn match_types_incompatible_ignore_sign_fails() {
+        use syn::{parse_str, Type};
+        let mut ty_matcher = TypeMatcher::new();
+        ty_matcher.ignore_int_sign();
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("i8").unwrap(),
+            &parse_str::<Type>("u32").unwrap()
+        ));
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("u16").unwrap(),
+            &parse_str::<Type>("i64").unwrap()
+        ));
+    }
+
+    #[test]
+    fn match_types_ptrs_const_fails() {
+        use syn::{parse_str, Type};
+        let ty_matcher = TypeMatcher::new();
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("*const i8").unwrap(),
+            &parse_str::<Type>("*mut i8").unwrap()
+        ));
+    }
+
+    #[test]
+    fn match_types_ptrs_ignore_const() {
+        use syn::{parse_str, Type};
+        let mut ty_matcher = TypeMatcher::new();
+        ty_matcher.ignore_ptr_constness();
+        // Inner type can introduce constness
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("*const i8").unwrap(),
+            &parse_str::<Type>("*mut i8").unwrap()
+        ));
+        // Inner type cannot introduce mutability
+        assert!(!ty_matcher.match_types(
+            &parse_str::<Type>("*mut i8").unwrap(),
+            &parse_str::<Type>("*const i8").unwrap()
+        ));
+
+        // Identical types must match
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("*const i8").unwrap(),
+            &parse_str::<Type>("*const i8").unwrap()
+        ));
+        assert!(ty_matcher.match_types(
+            &parse_str::<Type>("*mut i8").unwrap(),
+            &parse_str::<Type>("*mut i8").unwrap()
+        ));
     }
 }
