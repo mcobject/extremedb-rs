@@ -49,6 +49,10 @@ fn generate_bindings_header() -> String {
 
     writer.write_all(b"#ifndef BINDGEN_H_\n").unwrap();
 
+    if cfg!(target_pointer_width = "64") {
+        writer.write_all(b"#define MCO_PLATFORM_X64 1\n").unwrap();
+    }
+
     writer.write_all(b"#include \"mco.h\"\n").unwrap();
     writer.write_all(b"#include \"mcocomp.h\"\n").unwrap();
 
