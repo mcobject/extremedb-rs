@@ -4,16 +4,16 @@
 // Copyright (c) 2020 McObject LLC
 // All Rights Reserved
 
-pub type size_t = ::std::os::raw::c_ulong;
-pub type mco_iquad = ::std::os::raw::c_longlong;
-pub type mco_uquad = ::std::os::raw::c_ulonglong;
-pub type mco_uint1 = ::std::os::raw::c_uchar;
-pub type mco_uint2 = ::std::os::raw::c_ushort;
-pub type mco_uint4 = ::std::os::raw::c_uint;
+pub type size_t = usize;
+pub type mco_iquad = i64;
+pub type mco_uquad = u64;
+pub type mco_uint1 = u8;
+pub type mco_uint2 = u16;
+pub type mco_uint4 = u32;
 pub type mco_uint8 = mco_uquad;
-pub type mco_int1 = ::std::os::raw::c_schar;
-pub type mco_int2 = ::std::os::raw::c_short;
-pub type mco_int4 = ::std::os::raw::c_int;
+pub type mco_int1 = i8;
+pub type mco_int2 = i16;
+pub type mco_int4 = i32;
 pub type mco_int8 = mco_iquad;
 pub type mco_bool = ::std::os::raw::c_int;
 pub type mco_datetime = mco_uquad;
@@ -27,9 +27,9 @@ pub type int4 = mco_int4;
 pub type mco_offs32_t = uint4;
 pub type mco_offs32_sig_t = int4;
 pub type mco_counter32_t = uint4;
-pub type mco_size_t = uint8;
-pub type mco_offs_t = uint8;
-pub type mco_hash_counter_t = uint8;
+pub type mco_size_t = usize;
+pub type mco_offs_t = usize;
+pub type mco_hash_counter_t = usize;
 
 pub mod MCO_RET_E_ {
     pub type Type = u32;
