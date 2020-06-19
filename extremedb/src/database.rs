@@ -6,12 +6,12 @@
 
 //! Core database types.
 //!
-//! For the detailed information on database configuration, refer to
+//! For detailed information on database configuration, refer to
 //! the *e*X*treme*DB reference pages.
 //!
 //! # Examples
 //!
-//! Creating an in-memory database using the conventional memory:
+//! Creating an in-memory database using conventional memory:
 //!
 //! ```
 //! use extremedb::{database, device, runtime, Result};
@@ -45,7 +45,7 @@
 //! }
 //! ```
 //!
-//! Creating a persistent database (notice that `extremedb_sys` must be built
+//! Creating a persistent database (note that `extremedb_sys` must be built
 //! with persistent database support — refer to its documentation pages for
 //! the details):
 //!
@@ -505,7 +505,7 @@ impl ModeMask {
         mco_db_mode_mask::MCO_DB_INDEX_PRELOAD as u32
     );
     bitmask_flag!(
-        /// Disables the nested transactions.
+        /// Disables nested transactions.
         disable_nested_transactions,
         /// Returns the current flag value.
         get_disable_nested_transactions,
@@ -649,7 +649,7 @@ impl ModeMask {
 
 /// Database parameters.
 ///
-/// For the detailed information on the individual parameters and their
+/// For detailed information on the individual parameters and their
 /// allowed values, refer to the *e*X*treme*DB reference pages.
 ///
 /// # Examples
@@ -744,7 +744,7 @@ impl Params {
     );
 
     db_param_scalar!(
-        /// Sets the maximum disk space required.
+        /// Sets the maximum size of the persistent database.
         disk_max_database_size,
         /// Returns the current parameter value.
         get_disk_max_database_size,

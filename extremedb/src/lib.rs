@@ -21,7 +21,7 @@
 //!
 //! # Building
 //!
-//! This crate depends on the `extremedb_sys` crate, which requires some
+//! This crate depends on the `extremedb_sys` crate, which has some
 //! prerequisites, as well as a few environment variables to be set.
 //! Refer to the `extremedb_sys` crate reference for more information.
 //!

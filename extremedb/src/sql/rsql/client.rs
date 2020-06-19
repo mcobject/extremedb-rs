@@ -154,7 +154,7 @@ impl Params {
         self
     }
 
-    /// Sets the maximum connection attempts number.
+    /// Sets the maximum number of connection attempts.
     ///
     /// Default value is 10.
     pub fn max_conn_attempts(&mut self, max_conn_attempts: u32) -> &mut Self {
@@ -170,7 +170,7 @@ impl Params {
 /// the SQL DDL and DML queries as usual.
 ///
 /// However, it is impossible to create sessions using the remote engine, and
-/// the transactions have to be managed using the SQL transaction management
+/// the transactions must be managed using the SQL transaction management
 /// statements; [`Transaction`] objects cannot be used.
 ///
 /// [`Transaction`]: ../../trans/struct.Transaction.html

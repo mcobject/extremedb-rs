@@ -126,7 +126,7 @@ pub struct Server<'a> {
 impl<'a> Server<'a> {
     /// Creates a new server.
     ///
-    /// The newly created server has to be started explicitly using the
+    /// The newly created server must be started explicitly using the
     /// [`start()`] method.
     ///
     /// [`start()`]: #method.start

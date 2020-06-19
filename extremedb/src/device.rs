@@ -74,17 +74,13 @@ type McoDeviceTypeNamed = exdb_sys::mco_device_t_dev_named;
 type McoDeviceTypeFile = exdb_sys::mco_device_t_dev_file;
 type McoDeviceTypeMultiFile = exdb_sys::mco_device_t_dev_multifile;
 type McoDeviceTypeRaid = exdb_sys::mco_device_t_dev_raid;
-// type McoDeviceTypeIDesc = exdb_sys::mco_device_t_dev_idesc;
 
 mod mco_dev_type {
-    // pub const MCO_MEMORY_NULL: u32 = 0;
     pub const MCO_MEMORY_CONV: u32 = 1;
     pub const MCO_MEMORY_NAMED: u32 = 2;
     pub const MCO_MEMORY_FILE: u32 = 3;
     pub const MCO_MEMORY_MULTIFILE: u32 = 4;
     pub const MCO_MEMORY_RAID: u32 = 5;
-    // pub const MCO_MEMORY_INT_DESC: u32 = 6;
-    // pub const MCO_MEMORY_CYCLIC_FILE_BUF: u32 = 7;
 }
 
 /// Device assignment.
@@ -101,8 +97,6 @@ pub enum Assignment {
     Persistent,
     /// A persistent storage device that contains the database log.
     Log,
-    // HAAsyncBuf,
-    // PipeBuf,
 }
 
 impl Assignment {
@@ -112,8 +106,6 @@ impl Assignment {
             Assignment::Cache => 1,      // MCO_MEMORY_ASSIGN_CACHE
             Assignment::Persistent => 2, // MCO_MEMORY_ASSIGN_PERSISTENT
             Assignment::Log => 3,        // MCO_MEMORY_ASSIGN_LOG
-                                          // Assignment::HAAsyncBuf => 4, // MCO_MEMORY_ASSIGN_HA_ASYNC_BUF
-                                          // Assignment::PipeBuf => 5,    // MCO_MEMORY_ASSIGN_PIPE_BUF
         }
     }
 }

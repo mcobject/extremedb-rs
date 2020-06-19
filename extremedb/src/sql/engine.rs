@@ -6,8 +6,7 @@
 
 //! SQL engine and related types.
 //!
-//! SQL engines implement the SQL functionality for the *e*X*treme*DB
-//! database.
+//! SQL engines implement the SQL functionality for *e*X*treme*DB.
 //!
 //! This module defines the local SQL engine type, as well as the [`Engine`]
 //! trait, which is implemented by both the local SQL engine and the remote

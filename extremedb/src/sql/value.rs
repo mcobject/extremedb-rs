@@ -1499,7 +1499,7 @@ impl<'a> Blob<'a> {
         Ok(())
     }
 
-    /// Reads the given amount of bytes from the blob.
+    /// Reads the given number of bytes from the blob.
     ///
     /// If the number of bytes available for reading is smaller than the
     /// requested size, this method will perform multiple reads.

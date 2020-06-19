@@ -18,7 +18,7 @@
 //! ```
 //! # use extremedb::runtime::Runtime;
 //! let runtime = Runtime::start(vec![]);
-//! // Runtime is now started, and can be used to create a database.
+//! // Runtime is now started and can be used to create a database.
 //! ```
 //!
 //! See the [`options`] module for more information on runtime options.
@@ -72,7 +72,6 @@ pub mod options {
             pub const MCO_RT_MAX_DYNAMIC_PIPES: u32 = 7;
             pub const MCO_RT_OPTION_CLASS_LOAD_MERGE: u32 = 8;
             pub const MCO_RT_OPTION_DATETIME_PRECISION: u32 = 9;
-            // pub const MCO_RT_OPTION_LAST: u32 = 10;
         }
 
         pub(crate) mod values {

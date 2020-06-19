@@ -272,20 +272,6 @@ impl<'a> Record<'a> {
         }
     }
 
-    /*
-    fn allocator(&'a self) -> Result<SqlAllocatorRef<'a>> {
-        let mut alloc_h = MaybeUninit::uninit();
-
-        new_empty_result(unsafe {
-            exdb_sys::mcosql_rs_record_allocator(self.h, alloc_h.as_mut_ptr())
-        })
-        .and(Ok(SqlAllocatorRef::from_handle(
-            unsafe { alloc_h.assume_init() },
-            self,
-        )))
-    }
-    */
-
     /// Returns a reference to the value in the column `col`.
     pub fn get_at(&self, col: usize) -> Result<Ref> {
         let mut ret = MaybeUninit::uninit();
