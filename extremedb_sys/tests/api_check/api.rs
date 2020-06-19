@@ -32,6 +32,7 @@ pub enum MismatchError {
     UnionFieldCountMismatch(String),
     UnionFieldNameMismatch(String, String, String),
     UnionFieldTypeMismatch(String, String, String),
+    UnionAlignmentMismatch(String),
     FunctionMissing(String),
     FunctionAbiMismatch(String),
     FunctionArgsMismatch(String),
@@ -181,11 +182,15 @@ impl TryFrom<syn::ItemStruct> for Struct {
 #[derive(Debug)]
 struct Union {
     fields: Vec<(syn::Ident, syn::Type)>,
+    align: Option<syn::Type>,
 }
 
 impl Union {
     fn new() -> Self {
-        Union { fields: Vec::new() }
+        Union {
+            fields: Vec::new(),
+            align: None,
+        }
     }
 }
 
@@ -196,7 +201,13 @@ impl TryFrom<syn::ItemUnion> for Union {
         let mut u = Union::new();
 
         for field in value.fields.named {
-            u.fields.push((field.ident.unwrap(), field.ty));
+            let ident = field.ident.unwrap();
+            if ident == "_bindgen_union_align" {
+                assert!(u.align.is_none());
+                u.align = Some(field.ty);
+            } else {
+                u.fields.push((ident, field.ty));
+            }
         }
 
         Ok(u)
@@ -661,6 +672,13 @@ impl Matcher {
         } else if inner.fields != outer.fields {
             // Check fields one by one
             self.match_union_fields(ident, inner, outer)
+        } else if inner.align.is_some() && (inner.align != outer.align) {
+            // If the alignment is present in the inner union, it must match
+            // the outer union's alignment. Otherwise, the outer union's
+            // alignment is ignored.
+            Err(Error::Mismatch(MismatchError::UnionAlignmentMismatch(
+                ident.to_string(),
+            )))
         } else {
             Ok(())
         }
@@ -1157,6 +1175,11 @@ mod tests {
                 pub union_field2: u64,
             }
 
+            pub union UnionAligned {
+                pub al_union_field: u64,
+                _bindgen_union_align: [u64; 1usize],
+            }
+
             extern "C" {
                 pub fn some_function(arg_integer: i32, arg_pointer: *const u64) -> u8;
             }
@@ -1170,7 +1193,7 @@ mod tests {
         assert_eq!(api.enums.len(), 1);
         assert_eq!(api.typedefs.len(), 1);
         assert_eq!(api.structs.len(), 1);
-        assert_eq!(api.unions.len(), 1);
+        assert_eq!(api.unions.len(), 2);
         assert_eq!(api.functions.len(), 1);
 
         let e = api.enums.get(&syn_ident!(ConstifiedEnum)).unwrap();
@@ -1204,6 +1227,16 @@ mod tests {
             u.fields.get(1).unwrap(),
             &(syn_ident!(union_field2), syn_type!(u64))
         );
+        assert!(u.align.is_none());
+
+        let u = api.unions.get(&syn_ident!(UnionAligned)).unwrap();
+        assert_eq!(u.fields.len(), 1);
+        assert_eq!(
+            u.fields.get(0).unwrap(),
+            &(syn_ident!(al_union_field), syn_type!(u64))
+        );
+        assert!(u.align.is_some());
+        assert_eq!(u.align.as_ref().unwrap(), &syn_type!([u64; 1usize]));
 
         let f = api.functions.get(&syn_ident!(some_function)).unwrap();
         assert!(f.abi.is_some());
@@ -1458,6 +1491,108 @@ mod tests {
 
         let m = Matcher::new();
         m.match_apis(&api_inner, &api_outer)
+    }
+
+    #[test]
+    fn match_unions_with_alignment() -> Result<()> {
+        let u1 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u64)),
+        };
+
+        let u2 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u64)),
+        };
+
+        let mut api_inner = Api::new();
+        let mut api_outer = Api::new();
+
+        api_inner.unions.insert(syn_ident!(TestUnion), u1);
+        api_outer.unions.insert(syn_ident!(TestUnion), u2);
+
+        let m = Matcher::new();
+        m.match_apis(&api_inner, &api_outer)
+    }
+
+    #[test]
+    fn match_unions_with_outer_alignment_only() -> Result<()> {
+        let u1 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: None,
+        };
+
+        let u2 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u64)),
+        };
+
+        let mut api_inner = Api::new();
+        let mut api_outer = Api::new();
+
+        api_inner.unions.insert(syn_ident!(TestUnion), u1);
+        api_outer.unions.insert(syn_ident!(TestUnion), u2);
+
+        let m = Matcher::new();
+        m.match_apis(&api_inner, &api_outer)
+    }
+
+    #[test]
+    fn match_unions_with_diff_alignment_fails() {
+        let u1 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u64)),
+        };
+
+        let u2 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u32)),
+        };
+
+        let mut api_inner = Api::new();
+        let mut api_outer = Api::new();
+
+        api_inner.unions.insert(syn_ident!(TestUnion), u1);
+        api_outer.unions.insert(syn_ident!(TestUnion), u2);
+
+        let m = Matcher::new();
+        let ret = m.match_apis(&api_inner, &api_outer);
+        if let Err(Error::Mismatch(MismatchError::UnionAlignmentMismatch(ident))) = ret {
+            assert_eq!(ident, "TestUnion")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
+    }
+
+    #[test]
+    fn match_unions_with_inner_alignment_only_fails() {
+        let u1 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: Some(syn_type!(u64)),
+        };
+
+        let u2 = Union {
+            fields: vec![(syn_ident!(field1), syn_type!(u64))],
+            align: None,
+        };
+
+        let mut api_inner = Api::new();
+        let mut api_outer = Api::new();
+
+        api_inner.unions.insert(syn_ident!(TestUnion), u1);
+        api_outer.unions.insert(syn_ident!(TestUnion), u2);
+
+        let m = Matcher::new();
+        let ret = m.match_apis(&api_inner, &api_outer);
+        if let Err(Error::Mismatch(MismatchError::UnionAlignmentMismatch(ident))) = ret {
+            assert_eq!(ident, "TestUnion")
+        } else if let Err(e) = ret {
+            panic!("Unexpected error {:?}", e)
+        } else {
+            panic!("Error expected")
+        }
     }
 
     #[test]

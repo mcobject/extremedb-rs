@@ -671,7 +671,6 @@ pub union mco_device_t___bindgen_ty_1 {
     pub multifile: mco_device_t___bindgen_ty_1__bindgen_ty_4,
     pub raid: mco_device_t___bindgen_ty_1__bindgen_ty_5,
     pub idesc: mco_device_t___bindgen_ty_1__bindgen_ty_6,
-    _bindgen_union_align: [u64; 33usize],
 }
 
 pub type mco_device_t_dev = mco_device_t___bindgen_ty_1;
@@ -822,7 +821,6 @@ pub type mco_dict_struct_t = mco_dict_struct_t_;
 pub union mco_dictionary_t___bindgen_ty_1 {
     pub ptr: *const int4,
     pub offs: mco_offs_t,
-    _bindgen_union_align: u64,
 }
 
 pub type mco_dictionary_t_init_i_data = mco_dictionary_t___bindgen_ty_1;
@@ -832,7 +830,6 @@ pub type mco_dictionary_t_init_i_data = mco_dictionary_t___bindgen_ty_1;
 pub union mco_dictionary_t___bindgen_ty_2 {
     pub ptr: *const f64,
     pub offs: mco_offs_t,
-    _bindgen_union_align: u64,
 }
 
 pub type mco_dictionary_t_init_d_data = mco_dictionary_t___bindgen_ty_2;
