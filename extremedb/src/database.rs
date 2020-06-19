@@ -576,15 +576,6 @@ impl ModeMask {
         mco_db_mode_mask::MCO_DB_MVCC_COMPATIBILITY_MODE as u32
     );
     bitmask_flag!(
-        /// Prevents runtime from reserving space in page pool, allowing it to
-        /// use all of the page pool memory (unsafe; may cause a crash in the
-        /// case of page pool exhaustion).
-        disable_page_pool_reserve,
-        /// Returns the current flag value.
-        get_disable_page_pool_reserve,
-        mco_db_mode_mask::MCO_DB_DISABLE_PAGE_POOL_RESERVE as u32
-    );
-    bitmask_flag!(
         /// Allows transactions larger than the page pool size (Redo log only).
         redo_log_optimization,
         /// Returns the current flag value.
