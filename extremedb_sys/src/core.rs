@@ -65,7 +65,7 @@ pub mod MCO_RET_E_ {
     pub const MCO_E_ILLEGAL_PARAM: Type = 62;
     pub const MCO_E_CURSOR_MISMATCH: Type = 63;
     pub const MCO_E_DELETED: Type = 64;
-    pub const MCO_E_LONG_TRANSACTON: Type = 65;
+    pub const MCO_E_LONG_TRANSACTION: Type = 65;
     pub const MCO_E_INSTANCE_DUPLICATE: Type = 66;
     pub const MCO_E_UPGRADE_FAILED: Type = 67;
     pub const MCO_E_NOINSTANCE: Type = 68;
