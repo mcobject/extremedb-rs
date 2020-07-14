@@ -22,6 +22,7 @@
 //! # use extremedb::device::util;
 //! # use std::sync::Arc;
 //! # use std::thread;
+//! # use std::time::Duration;
 //! #
 //! # fn server_try_create<'a>(engine: &'a LocalEngine, port: u16) -> Option<Server<'a>> {
 //! #     let eref = LocalEngineRef::new(&engine);
@@ -30,6 +31,7 @@
 //! #         let mut srv = res.unwrap();
 //! #         let res = srv.start();
 //! #         if res.is_ok() {
+//! #             thread::sleep(Duration::from_secs(1));
 //! #             Some(srv)
 //! #         } else {
 //! #             None
