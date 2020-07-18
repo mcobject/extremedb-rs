@@ -31,7 +31,7 @@
 //! #         let mut srv = res.unwrap();
 //! #         let res = srv.start();
 //! #         if res.is_ok() {
-//! #             thread::sleep(Duration::from_secs(1));
+//! #             thread::sleep(Duration::from_secs(3));
 //! #             Some(srv)
 //! #         } else {
 //! #             None
