@@ -233,6 +233,10 @@ fn config_cargo_rerun() {
 }
 
 fn main() {
+    if env::var("DOCS_RS").unwrap_or(String::from("")) == "1" {
+        return;
+    }
+
     config_cargo_rerun();
 
     let build_cfg = BuildConfig::create();
