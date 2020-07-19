@@ -17,7 +17,7 @@ repository = "https://github.com/mcobject/extremedb-rs"
 readme = "README.md"
 
 [dependencies]
-extremedb_sys = { path = "../extremedb_sys" }
+extremedb_sys = "0.1.0"
 
 [features]
 sequences = ["extremedb_sys/sequences"]
