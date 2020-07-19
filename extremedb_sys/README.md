@@ -7,9 +7,9 @@ This package contains the low-level, unsafe Rust declarations of the
 matching their C counterparts. Most applications will never call the functions
 declared in this package directly.
 
-A few environment variables must be set prior to building this package. For the
+A few environment variables must be set prior to building this package. For
 details, refer to the documentation.
 
-Notice that an existing installation of *e*X*treme*DB 8.2 is required to build 
+Note that an existing installation of *e*X*treme*DB 8.2 is required to build 
 this package. An evaluation *e*X*treme*DB package can be requested at the
 [McObject website](https://www.mcobject.com).
