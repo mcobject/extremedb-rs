@@ -9,6 +9,12 @@ name = "extremedb"
 version = "0.1.0"
 authors = ["McObject LLC <info@mcobject.com>"]
 edition = "2018"
+license = "MIT"
+description = "McObject eXtremeDB bindings"
+homepage = "https://mcobject.com"
+documentation = "https://docs.rs/extremedb"
+repository = "https://github.com/mcobject/extremedb-rs"
+readme = "README.md"
 
 [dependencies]
 extremedb_sys = { path = "../extremedb_sys" }

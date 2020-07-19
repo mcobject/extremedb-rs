@@ -9,6 +9,12 @@ name = "extremedb_sys"
 version = "0.1.0"
 authors = ["McObject LLC <info@mcobject.com>"]
 edition = "2018"
+license = "MIT"
+description = "FFI bindings to McObject eXtremeDB"
+homepage = "https://mcobject.com"
+documentation = "https://docs.rs/extremedb_sys"
+repository = "https://github.com/mcobject/extremedb-rs"
+readme = "README.md"
 
 [dependencies]
 
