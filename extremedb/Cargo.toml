@@ -6,7 +6,7 @@
 
 [package]
 name = "extremedb"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["McObject LLC <info@mcobject.com>"]
 edition = "2018"
 license = "MIT"
@@ -23,3 +23,6 @@ extremedb_sys = "0.1.1"
 sequences = ["extremedb_sys/sequences"]
 sql = ["extremedb_sys/sql"]
 rsql = ["sql", "extremedb_sys/rsql"]
+
+[package.metadata.docs.rs]
+all-features = true
