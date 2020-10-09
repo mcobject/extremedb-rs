@@ -4,6 +4,7 @@ use std::io::{Error as IoError, Read};
 use std::mem;
 
 use proc_macro2::{LexError, Span};
+use quote::ToTokens;
 use syn;
 
 #[derive(Debug)]
@@ -125,8 +126,10 @@ impl TryFrom<syn::ItemMod> for ConstEnum {
                     }
                 }
                 syn::Item::Const(c) => {
-                    let val = ConstEnum::parse_const_value(&c.ident, &c.expr)?;
-                    variants.push((c.ident, val));
+                    if is_api_ver_compatible(&c.attrs) {
+                        let val = ConstEnum::parse_const_value(&c.ident, &c.expr)?;
+                        variants.push((c.ident, val));
+                    }
                 }
                 _ => {
                     return Err(Error::Api(ApiError::InvalidEnumMod(
@@ -169,7 +172,9 @@ impl TryFrom<syn::ItemStruct> for Struct {
             let mut s = Struct::new();
 
             for field in fields.named {
-                s.fields.push((field.ident.unwrap(), field.ty));
+                if is_api_ver_compatible(&field.attrs) {
+                    s.fields.push((field.ident.unwrap(), field.ty));
+                }
             }
 
             Ok(s)
@@ -205,7 +210,7 @@ impl TryFrom<syn::ItemUnion> for Union {
             if ident == "_bindgen_union_align" {
                 assert!(u.align.is_none());
                 u.align = Some(field.ty);
-            } else {
+            } else if is_api_ver_compatible(&field.attrs) {
                 u.fields.push((ident, field.ty));
             }
         }
@@ -302,6 +307,47 @@ impl Api {
     }
 }
 
+// Returns the eXtremeDB API version known from compile-time configuration
+// flags.
+fn get_api_ver() -> u32 {
+    // It seems to be impossible to get the actual value of a configuration
+    // flag. Hence, return the highest value known from the defined
+    // mco_api_ver_ge_* attributes.
+
+    // Highest version numbers must be at the top:
+    if cfg!(mco_api_ver_ge = "13") {
+        13u32
+    } else {
+        0u32
+    }
+}
+
+// Returns true if the current eXtremeDB API version matches API version
+// configuration requirements defined in attrs, or attrs does not contain
+// any such attributes.
+fn is_api_ver_compatible(attrs: &Vec<syn::Attribute>) -> bool {
+    CfgPredicate::All(
+        attrs
+            .iter()
+            .filter(|a| a.path.is_ident("cfg"))
+            .map(|a| Box::new(CfgPredicate::parse_attr(a)))
+            .collect(),
+    )
+    .evaluate()
+}
+
+// Executes $call only if API version requirements in $attrs (if any) match the
+// current API version. Returns Ok(()) otherwise.
+macro_rules! if_compatible {
+    ($attrs:expr, $call:expr) => {
+        if is_api_ver_compatible($attrs) {
+            $call
+        } else {
+            Ok(())
+        }
+    };
+}
+
 // Builds an Api structure from input file(s).
 pub struct Builder {
     api: Api,
@@ -354,11 +400,11 @@ impl Builder {
 
         match i {
             syn::Item::Mod(syn::ItemMod { content: None, .. }) => Ok(()),
-            syn::Item::Mod(i) => self.add_mod(i),
+            syn::Item::Mod(i) => if_compatible!(&i.attrs, self.add_mod(i)),
             syn::Item::Use(_) => Ok(()),
-            syn::Item::Type(i) => self.add_type(i),
-            syn::Item::Struct(i) => self.add_struct(i),
-            syn::Item::Union(i) => self.add_union(i),
+            syn::Item::Type(i) => if_compatible!(&i.attrs, self.add_type(i)),
+            syn::Item::Struct(i) => if_compatible!(&i.attrs, self.add_struct(i)),
+            syn::Item::Union(i) => if_compatible!(&i.attrs, self.add_union(i)),
             syn::Item::ForeignMod(i) => self.add_foreign_mod(i),
             _ => self.strict_err(Error::Api(ApiError::UnexpectedItem(format!("{:?}", i)))),
         }
@@ -375,7 +421,7 @@ impl Builder {
 
     fn add_foreign_item(&mut self, i: syn::ForeignItem, abi: Option<&String>) -> Result<()> {
         match i {
-            syn::ForeignItem::Fn(i) => self.add_foreign_fn(i, abi),
+            syn::ForeignItem::Fn(i) => if_compatible!(&i.attrs, self.add_foreign_fn(i, abi)),
             _ => self.strict_err(Error::Api(ApiError::UnexpectedItem(format!("{:?}", i)))),
         }
     }
@@ -484,6 +530,107 @@ impl Builder {
                 _ => false,
             },
             _ => false,
+        }
+    }
+}
+
+// A helper type that represents a compile-time configuration attribute ("cfg").
+//
+// This type is used to evaluate API version constraints (mco_api_ver_*
+// configuration attributes).
+#[derive(Debug)]
+enum CfgPredicate {
+    All(Vec<Box<CfgPredicate>>),
+    Any(Vec<Box<CfgPredicate>>),
+    Not(Box<CfgPredicate>),
+    Option((String, Option<String>)),
+}
+
+impl CfgPredicate {
+    // Parses an attribute containing a configuration predicate.
+    fn parse_attr(attr: &syn::Attribute) -> Self {
+        assert!(attr.path.is_ident("cfg"));
+
+        let meta = attr.parse_meta().expect("invalid attribute syntax");
+        match meta {
+            syn::Meta::List(meta) if meta.nested.len() == 1 => {
+                if let syn::NestedMeta::Meta(meta) = &meta.nested[0] {
+                    CfgPredicate::parse_meta_tree(&meta)
+                } else {
+                    panic!("Unexpected cfg attribute syntax")
+                }
+            }
+            _ => panic!("Unexpected cfg attribute syntax"),
+        }
+    }
+
+    // Recursively parses a predicate contained in meta.
+    fn parse_meta_tree(meta: &syn::Meta) -> Self {
+        match meta {
+            syn::Meta::Path(p) => CfgPredicate::Option((p.to_token_stream().to_string(), None)),
+            syn::Meta::NameValue(syn::MetaNameValue {
+                path: p, lit: v, ..
+            }) => {
+                let v = match v {
+                    syn::Lit::Str(v) => v.value(),
+                    syn::Lit::Int(v) => v.base10_digits().to_string(),
+                    _ => panic!("Unexpected cfg attribute value literal"),
+                };
+
+                CfgPredicate::Option((p.to_token_stream().to_string(), Some(v)))
+            }
+            syn::Meta::List(meta) => {
+                let mut children: Vec<Box<CfgPredicate>> = meta
+                    .nested
+                    .iter()
+                    .map(|n| match n {
+                        syn::NestedMeta::Meta(n) => Box::new(CfgPredicate::parse_meta_tree(n)),
+                        _ => panic!("Unexpected cfg attribute syntax"),
+                    })
+                    .collect();
+
+                if meta.path.is_ident("all") {
+                    CfgPredicate::All(children)
+                } else if meta.path.is_ident("any") {
+                    CfgPredicate::Any(children)
+                } else if meta.path.is_ident("not") {
+                    assert_eq!(children.len(), 1);
+                    CfgPredicate::Not(children.pop().unwrap())
+                } else {
+                    panic!("Unexpected cfg attribute predicate")
+                }
+            }
+        }
+    }
+
+    // Evaluates the configuration predicate.
+    fn evaluate(&self) -> bool {
+        match self {
+            CfgPredicate::All(p) => p.iter().all(|pred| pred.evaluate()),
+            CfgPredicate::Any(p) => p.iter().any(|pred| pred.evaluate()),
+            CfgPredicate::Not(p) => !p.evaluate(),
+            CfgPredicate::Option((k, v)) => CfgPredicate::evaluate_option(k, v.as_deref()),
+        }
+    }
+
+    // Evaluates a single configuration option.
+    fn evaluate_option(key: &str, value: Option<&str>) -> bool {
+        let api_ver = get_api_ver();
+
+        if key == "mco_api_ver_ge" {
+            value
+                .expect("predicate value")
+                .parse::<u32>()
+                .expect("invalid version value")
+                <= api_ver
+        } else if key == "mco_api_ver_lt" {
+            value
+                .expect("predicate value")
+                .parse::<u32>()
+                .expect("invalid version value")
+                > api_ver
+        } else {
+            panic!("Unexpected configuration attribute")
         }
     }
 }

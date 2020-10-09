@@ -5,7 +5,11 @@
 // All Rights Reserved
 
 use std::env;
+use std::fs::File;
 use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+use serde_json;
 
 enum TransactionManager {
     Exclusive,
@@ -24,6 +28,41 @@ const ENV_CFG_DISK: &str = "MCORS_CFG_DISK";
 const ENV_CFG_SHMEM: &str = "MCORS_CFG_SHMEM";
 const ENV_CFG_TMGR: &str = "MCORS_CFG_TMGR";
 
+const MCO_API_VER_CFG_KEY: &str = "mco_api_ver";
+
+#[derive(Debug, Deserialize)]
+struct Features {
+    #[serde(rename = "MCO_API_VERSION")]
+    ver_api: u32,
+    #[serde(rename = "MCO_PRODUCT_BUILD")]
+    build: u32,
+    #[serde(rename = "MCO_PRODUCT_MAGIC")]
+    magic: u32,
+    #[serde(rename = "MCO_PRODUCT_REVISION")]
+    rev: String,
+    #[serde(rename = "MCO_PRODUCT_VERSION_MAJOR")]
+    ver_major: u32,
+    #[serde(rename = "MCO_PRODUCT_VERSION_MINOR")]
+    ver_minor: u32,
+
+    #[serde(rename = "MCO_CFG_WRAPPER_CLUSTER_SUPPORT")]
+    cluster: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_HA_SUPPORT")]
+    ha: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_IOT_SUPPORT")]
+    iot: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_LUAUDF_SUPPORT")]
+    lua_udf: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_PERFMON_SUPPORT")]
+    perfmon: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_SEQUENCE_SUPPORT")]
+    seq: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_SQL_SUPPORT")]
+    sql: bool,
+    #[serde(rename = "MCO_CFG_WRAPPER_TL_SUPPORT")]
+    tl: bool,
+}
+
 struct BuildConfig {
     debug: bool,
     x64: bool,
@@ -35,6 +74,7 @@ struct BuildConfig {
     sequences: bool,
     sql: bool,
     rsql: bool,
+    features: Option<Features>,
 }
 
 impl BuildConfig {
@@ -74,7 +114,14 @@ impl BuildConfig {
             sequences: cfg!(feature = "sequences"),
             sql: cfg!(feature = "sql"),
             rsql: cfg!(feature = "rsql"),
+            features: BuildConfig::read_features(),
         }
+    }
+
+    fn read_features() -> Option<Features> {
+        let path = Path::new(&BuildConfig::get_env(ENV_MCO_ROOT)).join("include/mcofeatures.json");
+        let f = File::open(path).ok()?;
+        Some(serde_json::from_reader(f).unwrap())
     }
 
     fn get_env_bool(name: &str) -> bool {
@@ -232,6 +279,25 @@ fn config_cargo_rerun() {
     println!("cargo:rerun-if-env-changed={}", ENV_CFG_TMGR);
 }
 
+fn output_api_ver_string(suffix: &str, api_ver: u32) {
+    println!(
+        "cargo:rustc-cfg={}_{}=\"{}\"",
+        MCO_API_VER_CFG_KEY, suffix, api_ver
+    );
+}
+
+fn output_api_ver_ge(api_ver: u32) {
+    output_api_ver_string("ge", api_ver);
+}
+
+fn output_api_ver_config(api_ver: u32) {
+    output_api_ver_string("eq", api_ver);
+
+    if api_ver >= 13 {
+        output_api_ver_ge(13);
+    }
+}
+
 fn main() {
     if env::var("DOCS_RS").unwrap_or(String::from("")) == "1" {
         return;
@@ -245,4 +311,6 @@ fn main() {
     let mco_lib = mco_root.join(mco_libraries_subdir(&build_cfg));
 
     output_libraries(&build_cfg, &mco_lib);
+
+    build_cfg.features.map(|f| output_api_ver_config(f.ver_api));
 }

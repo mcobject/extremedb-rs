@@ -131,6 +131,12 @@ pub mod MCO_RET_E_ {
     pub const MCO_E_DISK_DICT_LIMITS_MISMATCH: Type = 128;
     pub const MCO_E_DISK_BTREE_ALLOC: Type = 129;
     pub const MCO_E_DISK_CRC_CHECK_MODE_MATCH: Type = 130;
+
+    #[cfg(mco_api_ver_ge = "13")]
+    pub const MCO_E_DISK_FATAL_ERROR: Type = 131;
+    #[cfg(mco_api_ver_ge = "13")]
+    pub const MCO_E_DISK_ALLOC_MISMATCH: Type = 132;
+
     pub const MCO_E_XML: Type = 200;
     pub const MCO_E_XML_INVINT: Type = 201;
     pub const MCO_E_XML_INVFLT: Type = 202;
@@ -315,6 +321,10 @@ pub mod MCO_RET_E_ {
     pub const MCO_E_TRANS_NOT_CLOSED: Type = 1023;
     pub const MCO_E_TRANS_NOT_ACTIVE: Type = 1024;
     pub const MCO_E_DATETIME_PRECISION_MISMATCH: Type = 1025;
+
+    #[cfg(mco_api_ver_ge = "13")]
+    pub const MCO_E_WRONG_CIPHER_KEY: Type = 1026;
+
     pub const MCO_E_VERIFICATION: Type = 1100;
     pub const MCO_E_IOT: Type = 1200;
     pub const MCO_E_IOT_NOT_INITIALIZED: Type = 1201;
@@ -495,6 +505,12 @@ pub mod MCO_DB_MODE_MASK_ {
     pub const MCO_DB_INCREMENTAL_BACKUP: Type = 33554432;
     pub const MCO_DB_MVCC_TABLE_LEVEL_LOCKING: Type = 67108864;
     pub const MCO_DB_DISABLE_SMART_ALLOC: Type = 134217728;
+
+    #[cfg(mco_api_ver_ge = "13")]
+    pub const MCO_DB_DISABLE_DISK_SPACE_RESERVE: Type = 268435456;
+
+    #[cfg(mco_api_ver_ge = "13")]
+    pub const MCO_DB_USE_ALLOCATION_MAP: Type = 536870912;
 }
 
 pub use MCO_DB_MODE_MASK_::Type as MCO_DB_MODE_MASK;
@@ -835,6 +851,17 @@ pub union mco_dictionary_t___bindgen_ty_2 {
 
 pub type mco_dictionary_t_init_d_data = mco_dictionary_t___bindgen_ty_2;
 
+#[cfg(mco_api_ver_ge = "13")]
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union mco_dictionary_t___bindgen_ty_3 {
+    pub ptr: *mut ::std::os::raw::c_char,
+    pub offs: mco_offs_t,
+}
+
+#[cfg(mco_api_ver_ge = "13")]
+pub type mco_dictionary_t_init_s_data = mco_dictionary_t___bindgen_ty_3;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct mco_dictionary_t_ {
@@ -874,6 +901,11 @@ pub struct mco_dictionary_t_ {
     pub init_d_data: mco_dictionary_t___bindgen_ty_2,
     pub init_d_data_n: uint4,
     pub class_code_origin: uint4,
+
+    #[cfg(mco_api_ver_ge = "13")]
+    pub init_s_data: mco_dictionary_t___bindgen_ty_3,
+    #[cfg(mco_api_ver_ge = "13")]
+    pub init_s_data_n: uint4,
 }
 
 pub type mco_dictionary_t = mco_dictionary_t_;
