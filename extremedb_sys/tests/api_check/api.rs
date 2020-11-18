@@ -315,7 +315,9 @@ fn get_api_ver() -> u32 {
     // mco_api_ver_ge_* attributes.
 
     // Highest version numbers must be at the top:
-    if cfg!(mco_api_ver_ge = "13") {
+    if cfg!(mco_api_ver_ge = "14") {
+        14u32
+    } else if cfg!(mco_api_ver_ge = "13") {
         13u32
     } else {
         0u32
@@ -629,6 +631,12 @@ impl CfgPredicate {
                 .parse::<u32>()
                 .expect("invalid version value")
                 > api_ver
+        } else if key == "mco_api_ver_eq" {
+            value
+                .expect("predicate value")
+                .parse::<u32>()
+                .expect("invalid version value")
+                == api_ver
         } else {
             panic!("Unexpected configuration attribute")
         }

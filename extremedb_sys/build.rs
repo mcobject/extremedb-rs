@@ -290,11 +290,23 @@ fn output_api_ver_ge(api_ver: u32) {
     output_api_ver_string("ge", api_ver);
 }
 
+fn output_api_ver_lt(api_ver: u32) {
+    output_api_ver_string("lt", api_ver);
+}
+
 fn output_api_ver_config(api_ver: u32) {
     output_api_ver_string("eq", api_ver);
 
     if api_ver >= 13 {
         output_api_ver_ge(13);
+    }
+
+    if api_ver >= 14 {
+        output_api_ver_ge(14);
+    }
+
+    if api_ver < 14 {
+        output_api_ver_lt(14);
     }
 }
 

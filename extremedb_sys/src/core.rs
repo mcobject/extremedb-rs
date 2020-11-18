@@ -502,15 +502,39 @@ pub mod MCO_DB_MODE_MASK_ {
     pub const MCO_DB_SQL_AUTOCHECKPOINT: Type = 4194304;
     pub const MCO_DB_MODE_READ_ONLY: Type = 8388608;
     pub const MCO_DB_USE_AIO: Type = 16777216;
+
+    #[cfg(mco_api_ver_lt = "14")]
     pub const MCO_DB_INCREMENTAL_BACKUP: Type = 33554432;
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_INCREMENTAL_BACKUP_ENABLED: Type = 33554432;
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_INCREMENTAL_BACKUP_PROCESSING: Type = 67108864;
+
+    #[cfg(mco_api_ver_lt = "14")]
     pub const MCO_DB_MVCC_TABLE_LEVEL_LOCKING: Type = 67108864;
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_MVCC_TABLE_LEVEL_LOCKING: Type = 134217728;
+
+    #[cfg(mco_api_ver_lt = "14")]
     pub const MCO_DB_DISABLE_SMART_ALLOC: Type = 134217728;
 
-    #[cfg(mco_api_ver_ge = "13")]
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_DISABLE_SMART_ALLOC: Type = 268435456;
+
+    #[cfg(all(mco_api_ver_eq = "13"))]
     pub const MCO_DB_DISABLE_DISK_SPACE_RESERVE: Type = 268435456;
 
-    #[cfg(mco_api_ver_ge = "13")]
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_DISABLE_DISK_SPACE_RESERVE: Type = 536870912;
+
+    #[cfg(all(mco_api_ver_eq = "13"))]
     pub const MCO_DB_USE_ALLOCATION_MAP: Type = 536870912;
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub const MCO_DB_USE_ALLOCATION_MAP: Type = 1073741824;
 }
 
 pub use MCO_DB_MODE_MASK_::Type as MCO_DB_MODE_MASK;
@@ -971,7 +995,13 @@ pub struct mco_runtime_info_t_ {
     pub sync_capabilities: uint1,
     pub char_comparison_policy: uint1,
     pub stream_buffer_size: uint4,
+
+    #[cfg(mco_api_ver_lt = "14")]
     pub max_db_instances: uint1,
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub max_db_instances: uint2,
+
     pub max_db_name_length: uint1,
     pub max_extends: ::std::os::raw::c_int,
     pub tl_page_buffer_size: uint4,
