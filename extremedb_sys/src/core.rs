@@ -625,6 +625,13 @@ pub struct mco_db_params_t_ {
     pub autocompact_threshold: mco_size_t,
     pub trans_sched_policy: MCO_TRANS_SCHED_POLICY,
     pub max_trans_time: uint8,
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub max_ttl_objects: uint8,
+
+    #[cfg(mco_api_ver_ge = "14")]
+    pub ignore_ttl: mco_bool,
+
     pub max_gc_versions: ::std::os::raw::c_int,
     pub max_active_pages: ::std::os::raw::c_int,
     pub page_hash_bundles: ::std::os::raw::c_int,
