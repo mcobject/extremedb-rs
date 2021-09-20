@@ -305,6 +305,10 @@ fn output_api_ver_config(api_ver: u32) {
         output_api_ver_ge(14);
     }
 
+    if api_ver >= 15 {
+        output_api_ver_ge(15);
+    }
+
     if api_ver < 14 {
         output_api_ver_lt(14);
     }

@@ -535,6 +535,9 @@ pub mod MCO_DB_MODE_MASK_ {
 
     #[cfg(mco_api_ver_ge = "14")]
     pub const MCO_DB_USE_ALLOCATION_MAP: Type = 1073741824;
+
+    #[cfg(mco_api_ver_ge = "15")]
+    pub const MCO_DB_PREEMPTIVE_MURSIW: Type = 2147483648;
 }
 
 pub use MCO_DB_MODE_MASK_::Type as MCO_DB_MODE_MASK;

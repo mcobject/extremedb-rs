@@ -315,7 +315,9 @@ fn get_api_ver() -> u32 {
     // mco_api_ver_ge_* attributes.
 
     // Highest version numbers must be at the top:
-    if cfg!(mco_api_ver_ge = "14") {
+    if cfg!(mco_api_ver_ge = "15") {
+        15u32
+    } else if cfg!(mco_api_ver_ge = "14") {
         14u32
     } else if cfg!(mco_api_ver_ge = "13") {
         13u32
