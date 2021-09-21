@@ -618,7 +618,7 @@ impl ModeMask {
         incremental_backup,
         /// Returns the current flag value.
         get_incremental_backup,
-        mco_db_mode_mask::MCO_DB_INCREMENTAL_BACKUP as u32
+        mco_db_mode_mask::MCO_DB_INCREMENTAL_BACKUP_ENABLED as u32
     );
     bitmask_flag!(
         /// Directs the runtime to block the entire table space instead of
