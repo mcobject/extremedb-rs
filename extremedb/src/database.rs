@@ -614,13 +614,6 @@ impl ModeMask {
         mco_db_mode_mask::MCO_DB_USE_AIO as u32
     );
     bitmask_flag!(
-        /// Enables the marking of pages for incremental backup.
-        incremental_backup,
-        /// Returns the current flag value.
-        get_incremental_backup,
-        mco_db_mode_mask::MCO_DB_INCREMENTAL_BACKUP_ENABLED as u32
-    );
-    bitmask_flag!(
         /// Directs the runtime to block the entire table space instead of
         /// selected instances during database operations (MVCC only).
         mvcc_table_level_locking,
