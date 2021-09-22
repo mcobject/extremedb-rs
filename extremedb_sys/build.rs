@@ -328,5 +328,5 @@ fn main() {
 
     output_libraries(&build_cfg, &mco_lib);
 
-    build_cfg.features.map(|f| output_api_ver_config(f.ver_api));
+    output_api_ver_config(build_cfg.features.map_or(0, |f| f.ver_api));
 }
